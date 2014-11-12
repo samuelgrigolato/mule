@@ -6,14 +6,15 @@
  */
 package org.mule.module.extensions.internal.introspection;
 
-import org.mule.extensions.introspection.api.Described;
-import org.mule.util.Preconditions;
+import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.mule.util.Preconditions.checkArgument;
+import org.mule.extensions.introspection.Described;
 
 import org.apache.commons.lang.StringUtils;
 
 /**
  * Abstract implementation to act as a convenience superclass for
- * implementations of {@link org.mule.extensions.introspection.api.Described}
+ * implementations of {@link Described}
  *
  * @since 3.7.0
  */
@@ -25,10 +26,10 @@ abstract class AbstractImmutableDescribed implements Described
 
     protected AbstractImmutableDescribed(String name, String description)
     {
-        Preconditions.checkArgument(!StringUtils.isBlank(name), "Name attribute cannot be null or blank");
+        checkArgument(!StringUtils.isBlank(name), "Name attribute cannot be null or blank");
 
         this.name = name;
-        this.description = description;
+        this.description = description != null ? description : EMPTY;
     }
 
     /**

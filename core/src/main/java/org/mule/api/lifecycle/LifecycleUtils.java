@@ -6,7 +6,9 @@
  */
 package org.mule.api.lifecycle;
 
+import org.mule.api.MuleContext;
 import org.mule.api.MuleException;
+import org.mule.api.context.MuleContextAware;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -16,6 +18,19 @@ import org.slf4j.Logger;
 
 public abstract class LifecycleUtils
 {
+
+    public static void initialiseIfNeeded(Object object, MuleContext muleContext) throws InitialisationException
+    {
+        if (object instanceof MuleContextAware)
+        {
+            ((MuleContextAware) object).setMuleContext(muleContext);
+        }
+
+        if (object instanceof Initialisable)
+        {
+            ((Initialisable) object).initialise();
+        }
+    }
 
     public static void initialiseIfNeeded(Collection<? extends Object> objects) throws InitialisationException
     {

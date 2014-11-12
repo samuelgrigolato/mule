@@ -37,26 +37,24 @@ public interface ObjectBuilder
 {
 
     /**
-     * Sets the {@link Class} of the object being built. The class
-     * must have a default public constructor and publish
-     * standard setters for each property to be populated
-     *
-     * @param prototypeClass a not {@code null} {@link Class}
-     * @return this builder
-     * @throws {@link IllegalArgumentException} if the class does not comply
-     *                with the requirements
-     */
-    ObjectBuilder setPrototypeClass(Class<?> prototypeClass);
-
-    /**
-     * Adds a property to the builder.
+     * Adds a property which value is to be obtained from
+     * a {@link ValueResolver}
      *
      * @param method   the setter to be used as an accessor
      * @param resolver a {@link ValueResolver} used to provide the actual value
      * @return this builder
      * @throws {@link java.lang.IllegalArgumentException} if method or resolver are {@code null}
      */
-    ObjectBuilder addProperty(Method method, ValueResolver resolver);
+    ObjectBuilder addPropertyResolver(Method method, ValueResolver resolver);
+
+    /**
+     * Adds a property which value is given as a constant
+     *
+     * @param method the setter to be used as an accessor
+     * @param value  the value to be set
+     * @return this builder
+     */
+    ObjectBuilder addPropertyValue(Method method, Object value);
 
     /**
      * Whether any of the registered {@link ValueResolver}s are dynamic

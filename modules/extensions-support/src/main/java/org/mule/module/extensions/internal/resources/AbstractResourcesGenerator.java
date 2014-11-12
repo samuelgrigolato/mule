@@ -6,27 +6,24 @@
  */
 package org.mule.module.extensions.internal.resources;
 
-import static org.mule.util.Preconditions.checkArgument;
-import org.mule.api.config.ServiceRegistry;
-import org.mule.config.SPIServiceRegistry;
-import org.mule.extensions.introspection.api.Extension;
-import org.mule.extensions.resources.api.GenerableResource;
-import org.mule.extensions.resources.api.ResourcesGenerator;
+import org.mule.api.registry.ServiceRegistry;
+import org.mule.extensions.introspection.Extension;
+import org.mule.extensions.resources.GenerableResource;
+import org.mule.extensions.resources.ResourcesGenerator;
 import org.mule.extensions.resources.spi.GenerableResourceContributor;
 
 import com.google.common.collect.ImmutableList;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 
 /**
- * Base implementation of {@link org.mule.extensions.resources.api.ResourcesGenerator}
+ * Base implementation of {@link ResourcesGenerator}
  * that takes care of the basic contract except for actually writing the resources to
  * a persistent store. Implementations are only required to provide that piece of logic
- * by using the {@link #write(org.mule.extensions.resources.api.GenerableResource)}
+ * by using the {@link #write(GenerableResource)}
  * template method
  *
  * @since 3.7.0
@@ -37,9 +34,9 @@ public abstract class AbstractResourcesGenerator implements ResourcesGenerator
     private Map<String, GenerableResource> resources = new HashMap<>();
     private ServiceRegistry serviceRegistry;
 
-    public AbstractResourcesGenerator()
+    public AbstractResourcesGenerator(ServiceRegistry serviceRegistry)
     {
-        setServiceRegistry(new SPIServiceRegistry());
+        this.serviceRegistry = serviceRegistry;
     }
 
     /**
@@ -65,11 +62,9 @@ public abstract class AbstractResourcesGenerator implements ResourcesGenerator
     @Override
     public void generateFor(Extension extension)
     {
-        Iterator<GenerableResourceContributor> contributors = serviceRegistry.lookupProviders(GenerableResourceContributor.class, getClass().getClassLoader());
-
-        while (contributors.hasNext())
+        for (GenerableResourceContributor contributor : serviceRegistry.lookupProviders(GenerableResourceContributor.class, getClass().getClassLoader()))
         {
-            contributors.next().contribute(extension, this);
+            contributor.contribute(extension, this);
         }
     }
 
@@ -89,18 +84,11 @@ public abstract class AbstractResourcesGenerator implements ResourcesGenerator
         return generatedResources.build();
     }
 
-    @Override
-    public void setServiceRegistry(ServiceRegistry serviceRegistry)
-    {
-        checkArgument(serviceRegistry != null, "serviceRegistry cannot be null");
-        this.serviceRegistry = serviceRegistry;
-    }
-
     /**
      * Template method to actually write the given
      * {@code resource} to a persistent store
      *
-     * @param resource a non null {@link org.mule.extensions.resources.api.GenerableResource}
+     * @param resource a non null {@link GenerableResource}
      */
     protected abstract void write(GenerableResource resource);
 }

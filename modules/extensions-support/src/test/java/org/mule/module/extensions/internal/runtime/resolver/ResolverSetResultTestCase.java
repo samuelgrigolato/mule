@@ -11,9 +11,8 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mule.module.extensions.internal.util.ExtensionsTestUtils.getParameter;
-import org.mule.extensions.introspection.api.ExtensionParameter;
+import org.mule.extensions.introspection.Parameter;
 import org.mule.module.extensions.HealthStatus;
-import org.mule.module.extensions.HeisenbergExtension;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
@@ -30,9 +29,9 @@ public class ResolverSetResultTestCase extends AbstractMuleTestCase
     private static final int AGE = 31;
     private static final HealthStatus HEALTH = null;
 
-    private ExtensionParameter nameParameter;
-    private ExtensionParameter ageParameter;
-    private ExtensionParameter healthParameter;
+    private Parameter nameParameter;
+    private Parameter ageParameter;
+    private Parameter healthParameter;
 
     private ResolverSetResult result;
 
@@ -86,15 +85,6 @@ public class ResolverSetResultTestCase extends AbstractMuleTestCase
     public void invalidParameter()
     {
         result.get(getParameter("invalid", String.class));
-    }
-
-    @Test
-    public void toInstance() throws Exception
-    {
-        HeisenbergExtension heisenberg = result.toInstanceOf(HeisenbergExtension.class);
-        assertThat(heisenberg.getMyName(), is(NAME));
-        assertThat(heisenberg.getAge(), is(AGE));
-        assertThat(heisenberg.getInitialHealth(), is(HEALTH));
     }
 
     private void assertResult(ResolverSetResult result)

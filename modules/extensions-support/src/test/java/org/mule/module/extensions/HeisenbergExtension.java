@@ -15,12 +15,12 @@ import org.mule.api.context.MuleContextAware;
 import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.lifecycle.Lifecycle;
 import org.mule.api.transport.PropertyScope;
-import org.mule.extensions.api.annotation.Configurable;
-import org.mule.extensions.api.annotation.Extension;
-import org.mule.extensions.api.annotation.Operation;
-import org.mule.extensions.api.annotation.capability.Xml;
-import org.mule.extensions.api.annotation.param.Optional;
-import org.mule.extensions.api.annotation.param.Payload;
+import org.mule.extensions.annotations.Configurable;
+import org.mule.extensions.annotations.Extension;
+import org.mule.extensions.annotations.Operation;
+import org.mule.extensions.annotations.capability.Xml;
+import org.mule.extensions.annotations.param.Optional;
+import org.mule.extensions.annotations.param.Payload;
 
 import java.math.BigDecimal;
 import java.util.Calendar;
@@ -47,7 +47,7 @@ public class HeisenbergExtension implements Lifecycle, MuleContextAware
 
     private int initialise = 0;
     private int start = 0;
-    private int stop;
+    private int stop = 0;
     private int dispose = 0;
 
     private MuleContext muleContext;

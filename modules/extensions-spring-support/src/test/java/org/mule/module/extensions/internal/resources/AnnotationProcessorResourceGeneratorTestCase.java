@@ -12,8 +12,8 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.mule.extensions.resources.api.GenerableResource;
-import org.mule.extensions.resources.api.ResourcesGenerator;
+import org.mule.extensions.resources.GenerableResource;
+import org.mule.extensions.resources.ResourcesGenerator;
 import org.mule.tck.size.SmallTest;
 
 import java.io.OutputStream;
@@ -35,11 +35,10 @@ public class AnnotationProcessorResourceGeneratorTestCase extends ResourcesGener
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private ProcessingEnvironment processingEnvironment;
 
-
     @Override
     protected ResourcesGenerator buildGenerator()
     {
-        return new AnnotationProcessorResourceGenerator(processingEnvironment);
+        return new AnnotationProcessorResourceGenerator(processingEnvironment, serviceRegistry);
     }
 
     @Test

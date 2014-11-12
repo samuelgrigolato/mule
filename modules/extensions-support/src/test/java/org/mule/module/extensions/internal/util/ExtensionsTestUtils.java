@@ -18,8 +18,8 @@ import org.mule.api.lifecycle.Disposable;
 import org.mule.api.lifecycle.Initialisable;
 import org.mule.api.lifecycle.Startable;
 import org.mule.api.lifecycle.Stoppable;
-import org.mule.extensions.introspection.api.ExtensionParameter;
-import org.mule.module.extensions.internal.introspection.ImmutableDataType;
+import org.mule.extensions.introspection.DataType;
+import org.mule.extensions.introspection.Parameter;
 import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
 
 import java.util.Collection;
@@ -50,11 +50,11 @@ public abstract class ExtensionsTestUtils
         return resolver;
     }
 
-    public static ExtensionParameter getParameter(String name, Class<?> type)
+    public static Parameter getParameter(String name, Class<?> type)
     {
-        ExtensionParameter parameter = mock(ExtensionParameter.class);
+        Parameter parameter = mock(Parameter.class);
         when(parameter.getName()).thenReturn(name);
-        when(parameter.getType()).thenReturn(ImmutableDataType.of(type));
+        when(parameter.getType()).thenReturn(DataType.of(type));
 
         return parameter;
     }

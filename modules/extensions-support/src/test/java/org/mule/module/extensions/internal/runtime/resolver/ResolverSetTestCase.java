@@ -15,9 +15,7 @@ import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
 import org.mule.api.context.MuleContextAware;
 import org.mule.api.lifecycle.Lifecycle;
-import org.mule.extensions.introspection.api.ExtensionParameter;
-import org.mule.module.extensions.HeisenbergExtension;
-import org.mule.module.extensions.internal.runtime.ObjectBuilder;
+import org.mule.extensions.introspection.Parameter;
 import org.mule.module.extensions.internal.util.ExtensionsTestUtils;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
@@ -40,7 +38,7 @@ public class ResolverSetTestCase extends AbstractMuleTestCase
     private static final int AGE = 31;
 
     private ResolverSet set;
-    private Map<ExtensionParameter, ValueResolver> mapping;
+    private Map<Parameter, ValueResolver> mapping;
 
     @Mock
     private MuleEvent event;
@@ -107,18 +105,6 @@ public class ResolverSetTestCase extends AbstractMuleTestCase
     }
 
     @Test
-    public void toObjectBuilder() throws Exception
-    {
-        ObjectBuilder builder = set.toObjectBuilderOf(HeisenbergExtension.class);
-        assertThat(builder, is(notNullValue()));
-
-        HeisenbergExtension heisenberg = (HeisenbergExtension) builder.build(event);
-        assertThat(heisenberg, is(notNullValue()));
-        assertThat(heisenberg.getMyName(), is(NAME));
-        assertThat(heisenberg.getAge(), is(AGE));
-    }
-
-    @Test
     public void isNotDynamic()
     {
         assertThat(set.isDynamic(), is(false));
@@ -134,20 +120,20 @@ public class ResolverSetTestCase extends AbstractMuleTestCase
         assertThat(set.isDynamic(), is(true));
     }
 
-    private void assertResult(ResolverSetResult result, Map<ExtensionParameter, ValueResolver> mapping) throws Exception
+    private void assertResult(ResolverSetResult result, Map<Parameter, ValueResolver> mapping) throws Exception
     {
         assertThat(result, is(notNullValue()));
-        for (Map.Entry<ExtensionParameter, ValueResolver> entry : mapping.entrySet())
+        for (Map.Entry<Parameter, ValueResolver> entry : mapping.entrySet())
         {
             Object value = result.get(entry.getKey());
             assertThat(value, is(entry.getValue().resolve(event)));
         }
     }
 
-    private ResolverSet buildSet(Map<ExtensionParameter, ValueResolver> mapping)
+    private ResolverSet buildSet(Map<Parameter, ValueResolver> mapping)
     {
         ResolverSet set = new ResolverSet();
-        for (Map.Entry<ExtensionParameter, ValueResolver> entry : mapping.entrySet())
+        for (Map.Entry<Parameter, ValueResolver> entry : mapping.entrySet())
         {
             set.add(entry.getKey(), entry.getValue());
         }

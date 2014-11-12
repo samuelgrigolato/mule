@@ -17,10 +17,12 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.runners.Parameterized.Parameter;
 import static org.junit.runners.Parameterized.Parameters;
 import org.mule.api.MuleEvent;
+import org.mule.extensions.introspection.Describer;
 import org.mule.module.extensions.Door;
 import org.mule.module.extensions.HealthStatus;
 import org.mule.module.extensions.HeisenbergExtension;
 import org.mule.module.extensions.Ricin;
+import org.mule.module.extensions.internal.introspection.AnnotationsBasedDescriber;
 import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
 import org.mule.tck.junit4.ExtensionsFunctionalTestCase;
 
@@ -86,19 +88,9 @@ public class ModuleDefinitionParserTestCase extends ExtensionsFunctionalTestCase
     }
 
     @Override
-    protected String[] getDiscoverablePackages()
+    protected Describer[] getManagedDescribers()
     {
-        return new String[] {"org.mule.module.extensions"};
-    }
-
-    /**
-     * Define this to only focus on {@link org.mule.module.extensions.HeisenbergExtension}
-     * and ignore other test extensions present in the same package
-     */
-    @Override
-    protected Class<?>[] getManagedExtensionTypes()
-    {
-        return new Class[] {HeisenbergExtension.class};
+        return new Describer[] {new AnnotationsBasedDescriber(HeisenbergExtension.class)};
     }
 
     @Test

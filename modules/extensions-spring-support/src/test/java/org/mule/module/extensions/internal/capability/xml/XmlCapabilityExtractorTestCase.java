@@ -6,20 +6,25 @@
  */
 package org.mule.module.extensions.internal.capability.xml;
 
-import static junit.framework.Assert.assertNotNull;
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import org.mule.extensions.api.annotation.capability.Xml;
-import org.mule.extensions.introspection.api.capability.XmlCapability;
+import org.mule.extensions.annotations.capability.Xml;
+import org.mule.extensions.introspection.capability.XmlCapability;
+import org.mule.extensions.introspection.declaration.DeclarationConstruct;
 import org.mule.module.extensions.internal.introspection.AbstractCapabilitiesExtractorContractTestCase;
 import org.mule.tck.size.SmallTest;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.runners.MockitoJUnitRunner;
 
 @SmallTest
+@RunWith(MockitoJUnitRunner.class)
 public class XmlCapabilityExtractorTestCase extends AbstractCapabilitiesExtractorContractTestCase
 {
 
@@ -28,7 +33,7 @@ public class XmlCapabilityExtractorTestCase extends AbstractCapabilitiesExtracto
     private static final String SCHEMA_LOCATION = "SCHEMA_LOCATION";
 
     private static final String EXTENSION_NAME = "extension";
-    private static final String EXTENSION_VERSION = "3.6";
+    private static final String EXTENSION_VERSION = "3.7";
 
     private ArgumentCaptor<XmlCapability> captor;
 
@@ -42,30 +47,28 @@ public class XmlCapabilityExtractorTestCase extends AbstractCapabilitiesExtracto
     @Test
     public void capabilityAdded()
     {
-        resolver.resolveCapabilities(XmlSupport.class, builder);
-        verify(builder).addCapablity(captor.capture());
+        resolver.resolveCapabilities(declarationConstruct, XmlSupport.class, capabilitiesCallback);
+        verify(capabilitiesCallback).withCapability(captor.capture());
 
         XmlCapability capability = captor.getValue();
-        assertNotNull(capability);
-        assertEquals(SCHEMA_VERSION, capability.getSchemaVersion());
-        assertEquals(NAMESPACE, capability.getNamespace());
-        assertEquals(SCHEMA_LOCATION, capability.getSchemaLocation());
+        assertThat(capability, is(notNullValue()));
+        assertThat(capability.getSchemaVersion(), is(SCHEMA_VERSION));
+        assertThat(capability.getNamespace(), is(NAMESPACE));
+        assertThat(capability.getSchemaLocation(), is(SCHEMA_LOCATION));
     }
 
     @Test
     public void defaultCapabilityValues()
     {
-        when(builder.getName()).thenReturn(EXTENSION_NAME);
-        when(builder.getVersion()).thenReturn(EXTENSION_VERSION);
-
-        resolver.resolveCapabilities(DefaultXmlExtension.class, builder);
-        verify(builder).addCapablity(captor.capture());
+        declarationConstruct = new DeclarationConstruct(EXTENSION_NAME, EXTENSION_VERSION);
+        resolver.resolveCapabilities(declarationConstruct, DefaultXmlExtension.class, capabilitiesCallback);
+        verify(capabilitiesCallback).withCapability(captor.capture());
 
         XmlCapability capability = captor.getValue();
-        assertNotNull(capability);
-        assertEquals(EXTENSION_VERSION, capability.getSchemaVersion());
-        assertEquals(NAMESPACE, capability.getNamespace());
-        assertEquals(String.format(XmlCapabilityExtractor.DEFAULT_SCHEMA_LOCATION_MASK, EXTENSION_NAME), capability.getSchemaLocation());
+        assertThat(capability, is(notNullValue()));
+        assertThat(capability.getSchemaVersion(), is(EXTENSION_VERSION));
+        assertThat(capability.getNamespace(), is(NAMESPACE));
+        assertThat(capability.getSchemaLocation(), equalTo(String.format(XmlCapabilityExtractor.DEFAULT_SCHEMA_LOCATION_MASK, EXTENSION_NAME)));
     }
 
     @Xml(schemaVersion = SCHEMA_VERSION, namespace = NAMESPACE, schemaLocation = SCHEMA_LOCATION)

@@ -7,19 +7,18 @@
 package org.mule.module.extensions.internal.resources;
 
 import static org.mule.util.Preconditions.checkState;
-import org.mule.config.SPIServiceRegistry;
-import org.mule.extensions.introspection.api.CapabilityAwareBuilder;
-import org.mule.extensions.introspection.api.Extension;
-import org.mule.extensions.introspection.api.ExtensionBuilder;
-import org.mule.extensions.introspection.api.ExtensionDescriber;
-import org.mule.extensions.introspection.api.ExtensionDescribingContext;
-import org.mule.extensions.introspection.api.capability.XmlCapability;
-import org.mule.extensions.resources.api.ResourcesGenerator;
-import org.mule.module.extensions.internal.ImmutableExtensionDescribingContext;
+import org.mule.api.registry.SPIServiceRegistry;
+import org.mule.extensions.introspection.Describer;
+import org.mule.extensions.introspection.DescribingContext;
+import org.mule.extensions.introspection.Extension;
+import org.mule.extensions.introspection.ExtensionFactory;
+import org.mule.extensions.introspection.capability.XmlCapability;
+import org.mule.extensions.resources.ResourcesGenerator;
+import org.mule.module.extensions.internal.ImmutableDescribingContext;
 import org.mule.module.extensions.internal.capability.xml.XmlCapabilityExtractor;
 import org.mule.module.extensions.internal.capability.xml.schema.SchemaDocumenterPostProcessor;
-import org.mule.module.extensions.internal.introspection.DefaultExtensionBuilder;
-import org.mule.module.extensions.internal.introspection.DefaultExtensionDescriber;
+import org.mule.module.extensions.internal.introspection.AnnotationsBasedDescriber;
+import org.mule.module.extensions.internal.introspection.DefaultExtensionFactory;
 import org.mule.util.ClassUtils;
 import org.mule.util.ExceptionUtils;
 
@@ -39,8 +38,8 @@ import javax.tools.Diagnostic;
 
 /**
  * Annotation processor that picks up all the extensions annotated with
- * {@link org.mule.extensions.introspection.api.Extension} and use a
- * {@link org.mule.extensions.resources.api.ResourcesGenerator} to generated
+ * {@link Extension} and use a
+ * {@link ResourcesGenerator} to generated
  * the required resources.
  * <p/>
  * This annotation processor will automatically generate and package into the output jar
@@ -56,18 +55,14 @@ import javax.tools.Diagnostic;
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
 public class ExtensionResourcesGeneratorAnnotationProcessor extends AbstractProcessor
 {
-
-    public ExtensionResourcesGeneratorAnnotationProcessor()
-    {
-        super();
-    }
+    private final ExtensionFactory extensionFactory = new DefaultExtensionFactory(new SPIServiceRegistry());
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv)
     {
         log("Starting Resources generator for Extensions");
 
-        ResourcesGenerator generator = new AnnotationProcessorResourceGenerator(processingEnv);
+        ResourcesGenerator generator = new AnnotationProcessorResourceGenerator(processingEnv, new SPIServiceRegistry());
         try
         {
             for (TypeElement extensionElement : findExtensions(roundEnv))
@@ -90,32 +85,22 @@ public class ExtensionResourcesGeneratorAnnotationProcessor extends AbstractProc
 
     private Extension parseExtension(TypeElement extensionElement)
     {
-        ExtensionBuilder builder = DefaultExtensionBuilder.newBuilder();
         Class<?> extensionClass = getClass(extensionElement);
+        Describer describer = new AnnotationsBasedDescriber(extensionClass);
 
-        ExtensionDescribingContext context = new ImmutableExtensionDescribingContext(extensionClass, builder);
+        DescribingContext context = new ImmutableDescribingContext(describer.describe().getRootConstruct());
         context.getCustomParameters().put(SchemaDocumenterPostProcessor.EXTENSION_ELEMENT, extensionElement);
         context.getCustomParameters().put(SchemaDocumenterPostProcessor.PROCESSING_ENVIRONMENT, processingEnv);
 
-        buildExtensionDescriber().describe(context);
+        extractXmlCapability(extensionClass, context);
 
-        extractXmlCapability(extensionClass, builder);
-
-        return builder.build();
+        return extensionFactory.createFrom(context.getDeclarationConstruct());
     }
 
-    private ExtensionDescriber buildExtensionDescriber()
-    {
-        ExtensionDescriber describer = new DefaultExtensionDescriber();
-        describer.setServiceRegistry(new SPIServiceRegistry());
-
-        return describer;
-    }
-
-    private XmlCapability extractXmlCapability(Class<?> extensionClass, CapabilityAwareBuilder<?, ?> builder)
+    private XmlCapability extractXmlCapability(Class<?> extensionClass, DescribingContext context)
     {
         XmlCapabilityExtractor extractor = new XmlCapabilityExtractor();
-        XmlCapability capability = (XmlCapability) extractor.extractCapability(extensionClass, builder);
+        XmlCapability capability = (XmlCapability) extractor.extractCapability(context.getDeclarationConstruct(), extensionClass, context.getDeclarationConstruct());
         checkState(capability != null, "Could not find xml capability for extension " + extensionClass.getName());
 
         return capability;
@@ -124,7 +109,7 @@ public class ExtensionResourcesGeneratorAnnotationProcessor extends AbstractProc
 
     private List<TypeElement> findExtensions(RoundEnvironment env)
     {
-        return ImmutableList.copyOf(ElementFilter.typesIn(env.getElementsAnnotatedWith(org.mule.extensions.api.annotation.Extension.class)));
+        return ImmutableList.copyOf(ElementFilter.typesIn(env.getElementsAnnotatedWith(org.mule.extensions.annotations.Extension.class)));
     }
 
     private void log(String message)

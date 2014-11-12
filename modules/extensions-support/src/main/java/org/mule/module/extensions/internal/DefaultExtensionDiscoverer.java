@@ -7,103 +7,53 @@
 package org.mule.module.extensions.internal;
 
 import static org.mule.util.Preconditions.checkArgument;
-import org.mule.api.MuleRuntimeException;
-import org.mule.config.i18n.MessageFactory;
-import org.mule.extensions.introspection.api.Extension;
-import org.mule.extensions.introspection.api.ExtensionBuilder;
-import org.mule.extensions.introspection.api.ExtensionDescriber;
-import org.mule.module.extensions.internal.introspection.DefaultExtensionBuilder;
+import org.mule.api.registry.ServiceRegistry;
+import org.mule.extensions.introspection.Describer;
+import org.mule.extensions.introspection.Extension;
+import org.mule.extensions.introspection.ExtensionFactory;
 import org.mule.module.extensions.internal.introspection.ExtensionDiscoverer;
-import org.mule.util.ClassUtils;
-import org.mule.util.IOUtils;
-import org.mule.util.StringUtils;
 
 import com.google.common.collect.ImmutableList;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.Enumeration;
+import java.util.Collection;
 import java.util.List;
 
+/**
+ * Default implementation of {@link ExtensionDiscoverer}
+ *
+ * @since 3.7.0
+ */
 final class DefaultExtensionDiscoverer implements ExtensionDiscoverer
 {
 
-    private static final String EXTENSIONS_PROPERTIES = "META-INF/extensions/mule.extensions";
+    private final ExtensionFactory extensionFactory;
+    private final ServiceRegistry serviceRegistry;
+
+    public DefaultExtensionDiscoverer(ExtensionFactory extensionFactory, ServiceRegistry serviceRegistry)
+    {
+        this.extensionFactory = extensionFactory;
+        this.serviceRegistry = serviceRegistry;
+    }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public List<Extension> discover(ClassLoader classLoader, ExtensionDescriber describer)
+    public List<Extension> discover(ClassLoader classLoader)
     {
         checkArgument(classLoader != null, "classloader cannot be null");
-        checkArgument(describer != null, "describer cannot be null");
 
-        final ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
-        try
-        {
-            Thread.currentThread().setContextClassLoader(classLoader);
-            Enumeration<URL> allExtensions = classLoader.getResources(EXTENSIONS_PROPERTIES);
-
-            ImmutableList.Builder<Extension> extensions = ImmutableList.builder();
-
-            while (allExtensions.hasMoreElements())
-            {
-                String lines = read(allExtensions.nextElement());
-                for (String line : lines.split(System.lineSeparator()))
-                {
-                    line = line.trim();
-
-                    if (StringUtils.isBlank(line))
-                    {
-                        continue; // skip empty line
-                    }
-
-                    extensions.add(loadExtension(line, classLoader, describer));
-                }
-            }
-
-            return extensions.build();
+        Collection<Describer> describers = serviceRegistry.lookupProviders(Describer.class, classLoader);
+        if (describers.isEmpty()) {
+            return ImmutableList.of();
         }
-        catch (IOException e)
+
+        ImmutableList.Builder<Extension> builder = ImmutableList.builder();
+        for (Describer describer : describers)
         {
-            throw new RuntimeException("Failed to find extensions", e);
+            builder.add(extensionFactory.createFrom(describer.describe()));
         }
-        finally
-        {
-            Thread.currentThread().setContextClassLoader(originalClassLoader);
-        }
+
+        return builder.build();
     }
-
-    private Extension loadExtension(String extensionClassname, ClassLoader classLoader, ExtensionDescriber describer)
-    {
-        try
-        {
-            Class<?> extensionClass = ClassUtils.loadClass(extensionClassname, classLoader);
-
-            ExtensionBuilder builder = DefaultExtensionBuilder.newBuilder();
-            describer.describe(new ImmutableExtensionDescribingContext(extensionClass, builder));
-
-            return builder.build();
-        }
-        catch (ClassNotFoundException e)
-        {
-            throw new IllegalArgumentException(String.format("Extension %s was declared but not found in classpath", extensionClassname), e);
-        }
-    }
-
-    private String read(URL url)
-    {
-        try (InputStream in = url.openStream())
-        {
-            return IOUtils.toString(in);
-        }
-        catch (IOException e)
-        {
-            throw new MuleRuntimeException(
-                    MessageFactory.createStaticMessage("Could not read extension descriptor at " + url.getPath()), e);
-        }
-    }
-
 }

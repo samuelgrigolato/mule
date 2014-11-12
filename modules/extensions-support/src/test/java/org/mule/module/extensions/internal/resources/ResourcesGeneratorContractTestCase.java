@@ -11,13 +11,14 @@ import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertSame;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.same;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.mule.api.config.ServiceRegistry;
-import org.mule.extensions.introspection.api.Extension;
-import org.mule.extensions.resources.api.GenerableResource;
-import org.mule.extensions.resources.api.ResourcesGenerator;
+import org.mule.api.registry.ServiceRegistry;
+import org.mule.extensions.introspection.Extension;
+import org.mule.extensions.resources.GenerableResource;
+import org.mule.extensions.resources.ResourcesGenerator;
 import org.mule.extensions.resources.spi.GenerableResourceContributor;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
@@ -33,9 +34,12 @@ public abstract class ResourcesGeneratorContractTestCase extends AbstractMuleTes
 
     protected ResourcesGenerator generator;
 
+    protected ServiceRegistry serviceRegistry;
+
     @Before
     public void before()
     {
+        serviceRegistry = mock(ServiceRegistry.class, RETURNS_DEEP_STUBS);
         generator = buildGenerator();
     }
 
@@ -57,22 +61,14 @@ public abstract class ResourcesGeneratorContractTestCase extends AbstractMuleTes
     @Test
     public void generate()
     {
-        ServiceRegistry serviceRegistry = mock(ServiceRegistry.class);
         GenerableResourceContributor contributor = mock(GenerableResourceContributor.class);
         when(serviceRegistry.lookupProviders(same(GenerableResourceContributor.class), any(ClassLoader.class)))
-                .thenReturn(Arrays.asList(contributor).iterator());
+                .thenReturn(Arrays.asList(contributor));
 
         Extension extension = mock(Extension.class);
 
-        generator.setServiceRegistry(serviceRegistry);
         generator.generateFor(extension);
 
         verify(contributor).contribute(extension, generator);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void nullServiceRegistry()
-    {
-        generator.setServiceRegistry(null);
     }
 }

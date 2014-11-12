@@ -7,11 +7,11 @@
 package org.mule.module.extensions.internal;
 
 import org.mule.common.MuleVersion;
-import org.mule.config.SPIServiceRegistry;
-import org.mule.extensions.api.ExtensionsManager;
-import org.mule.extensions.introspection.api.Extension;
-import org.mule.extensions.introspection.api.ExtensionDescriber;
-import org.mule.module.extensions.internal.introspection.DefaultExtensionDescriber;
+import org.mule.api.registry.SPIServiceRegistry;
+import org.mule.api.registry.ServiceRegistry;
+import org.mule.extensions.ExtensionsManager;
+import org.mule.extensions.introspection.Extension;
+import org.mule.module.extensions.internal.introspection.DefaultExtensionFactory;
 import org.mule.module.extensions.internal.introspection.ExtensionDiscoverer;
 import org.mule.util.Preconditions;
 
@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Default implementation of {@link org.mule.extensions.api.ExtensionsManager}
+ * Default implementation of {@link ExtensionsManager}
  *
  * @since 3.7.0
  */
@@ -38,38 +38,23 @@ public final class DefaultExtensionsManager implements ExtensionsManager
     private static final Logger logger = LoggerFactory.getLogger(DefaultExtensionsManager.class);
 
     private final Map<String, Extension> extensions = Collections.synchronizedMap(new LinkedHashMap<String, Extension>());
-    private ExtensionDiscoverer extensionDiscoverer = new DefaultExtensionDiscoverer();
-
-    public DefaultExtensionsManager()
-    {
-
-    }
-
+    private final ServiceRegistry serviceRegistry = new SPIServiceRegistry();
+    private ExtensionDiscoverer extensionDiscoverer = new DefaultExtensionDiscoverer(new DefaultExtensionFactory(serviceRegistry), serviceRegistry);
 
     @Override
     public List<Extension> discoverExtensions(ClassLoader classLoader)
     {
         logger.info("Starting discovery of extensions");
 
-        List<Extension> discovered = extensionDiscoverer.discover(classLoader, newDescriber());
+        List<Extension> discovered = extensionDiscoverer.discover(classLoader);
         logger.info("Discovered {} extensions", discovered.size());
 
         ImmutableList.Builder<Extension> accepted = ImmutableList.builder();
 
         for (Extension extension : discovered)
         {
-            final String extensionName = extension.getName();
-
-            if (extensions.containsKey(extensionName))
+            if (registerExtension(extension))
             {
-                if (maybeUpdateExtension(extension, extensionName))
-                {
-                    accepted.add(extension);
-                }
-            }
-            else
-            {
-                registerExtension(extension);
                 accepted.add(extension);
             }
         }
@@ -77,18 +62,24 @@ public final class DefaultExtensionsManager implements ExtensionsManager
         return accepted.build();
     }
 
-    private void registerExtension(Extension extension)
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean registerExtension(Extension extension)
     {
         logger.info("Registering extension (version {})", extension.getName(), extension.getVersion());
-        extensions.put(extension.getName(), extension);
-    }
+        final String extensionName = extension.getName();
 
-    private ExtensionDescriber newDescriber()
-    {
-        ExtensionDescriber describer = new DefaultExtensionDescriber();
-        describer.setServiceRegistry(new SPIServiceRegistry());
-
-        return describer;
+        if (extensions.containsKey(extensionName))
+        {
+            return maybeUpdateExtension(extension, extensionName);
+        }
+        else
+        {
+            doRegisterExtension(extension, extensionName);
+            return true;
+        }
     }
 
     private boolean maybeUpdateExtension(Extension extension, String extensionName)
@@ -111,7 +102,7 @@ public final class DefaultExtensionsManager implements ExtensionsManager
         if (newVersion.newerThan(actual.getVersion()))
         {
             logExtensionHotUpdate(extension, actual);
-            registerExtension(extension);
+            doRegisterExtension(extension, extensionName);
 
             return true;
         }
@@ -123,6 +114,11 @@ public final class DefaultExtensionsManager implements ExtensionsManager
 
             return false;
         }
+    }
+
+    private void doRegisterExtension(Extension extension, String extensionName)
+    {
+        extensions.put(extensionName, extension);
     }
 
     private void logExtensionHotUpdate(Extension extension, Extension actual)

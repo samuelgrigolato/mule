@@ -7,17 +7,17 @@
 package org.mule.module.extensions.internal.capability.xml.schema;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
-import static org.mule.extensions.introspection.api.DataQualifier.LIST;
-import static org.mule.extensions.introspection.api.DataQualifier.OPERATION;
+import static org.mule.extensions.introspection.DataQualifier.LIST;
+import static org.mule.extensions.introspection.DataQualifier.OPERATION;
 import static org.mule.module.extensions.internal.util.IntrospectionUtils.isDynamic;
 import static org.mule.module.extensions.internal.util.IntrospectionUtils.isIgnored;
 import static org.mule.module.extensions.internal.util.IntrospectionUtils.isRequired;
-import org.mule.extensions.introspection.api.DataQualifier;
-import org.mule.extensions.introspection.api.DataType;
-import org.mule.extensions.introspection.api.ExtensionConfiguration;
-import org.mule.extensions.introspection.api.ExtensionOperation;
-import org.mule.extensions.introspection.api.ExtensionParameter;
-import org.mule.module.extensions.internal.BaseDataQualifierVisitor;
+import org.mule.extensions.introspection.Configuration;
+import org.mule.extensions.introspection.DataQualifier;
+import org.mule.extensions.introspection.DataType;
+import org.mule.extensions.introspection.Extension;
+import org.mule.extensions.introspection.Operation;
+import org.mule.extensions.introspection.Parameter;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Annotation;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Attribute;
 import org.mule.module.extensions.internal.capability.xml.schema.model.ComplexContent;
@@ -46,7 +46,7 @@ import org.mule.module.extensions.internal.capability.xml.schema.model.TopLevelC
 import org.mule.module.extensions.internal.capability.xml.schema.model.TopLevelElement;
 import org.mule.module.extensions.internal.capability.xml.schema.model.TopLevelSimpleType;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Union;
-import org.mule.module.extensions.internal.introspection.ImmutableDataType;
+import org.mule.module.extensions.internal.introspection.BaseDataQualifierVisitor;
 import org.mule.module.extensions.internal.util.IntrospectionUtils;
 import org.mule.module.extensions.internal.util.NameUtils;
 import org.mule.util.ArrayUtils;
@@ -65,7 +65,7 @@ import javax.xml.namespace.QName;
 
 /**
  * Builder class to generate a XSD schema that describes a
- * {@link org.mule.extensions.introspection.api.Extension}
+ * {@link Extension}
  *
  * @since 3.7.0
  */
@@ -203,17 +203,19 @@ public class SchemaBuilder
         return simpleType;
     }
 
-    public SchemaBuilder registerConfigElement(final ExtensionConfiguration configuration)
+    public SchemaBuilder registerConfigElement(final Configuration configuration)
     {
         Map<QName, String> otherAttributes = new HashMap<>();
         final ExtensionType config = registerExtension(configuration.getName(), otherAttributes);
         config.getAttributeOrAttributeGroup().add(createNameAttribute());
 
-        final ExplicitGroup all = new ExplicitGroup();
-        config.setSequence(all);
+        final ExplicitGroup choice = new ExplicitGroup();
+        choice.setMinOccurs(new BigInteger("0"));
+        choice.setMaxOccurs("unbounded");
+        config.setChoice(choice);
 
 
-        for (final ExtensionParameter parameter : configuration.getParameters())
+        for (final Parameter parameter : configuration.getParameters())
         {
             parameter.getType().getQualifier().accept(new BaseDataQualifierVisitor()
             {
@@ -225,24 +227,19 @@ public class SchemaBuilder
                 {
                     forceOptional = true;
                     defaultOperation();
-                    generateCollectionElement(all, parameter, true);
+                    generateCollectionElement(choice, parameter, true);
                 }
 
                 @Override
                 public void onPojo()
                 {
-                    boolean describable = forceOptional = IntrospectionUtils.isDescribable(configuration.getDeclaringClass(), parameter);
-
+                    forceOptional = false;
                     defaultOperation();
-
-                    if (describable)
-                    {
-                        registerComplexTypeChildElement(all,
-                                                        parameter.getName(),
-                                                        parameter.getDescription(),
-                                                        parameter.getType(),
-                                                        isRequired(parameter, forceOptional));
-                    }
+                    registerComplexTypeChildElement(choice,
+                                                    parameter.getName(),
+                                                    parameter.getDescription(),
+                                                    parameter.getType(),
+                                                    isRequired(parameter, forceOptional));
                 }
 
                 @Override
@@ -255,9 +252,9 @@ public class SchemaBuilder
 
         config.setAnnotation(createDocAnnotation(configuration.getDescription()));
 
-        if (all.getParticle().size() == 0)
+        if (choice.getParticle().size() == 0)
         {
-            config.setSequence(null);
+            config.setChoice(null);
         }
 
         return this;
@@ -265,10 +262,10 @@ public class SchemaBuilder
 
     private Attribute createNameAttribute()
     {
-        return createAttribute(SchemaConstants.ATTRIBUTE_NAME_NAME, ImmutableDataType.of(String.class), true, false);
+        return createAttribute(SchemaConstants.ATTRIBUTE_NAME_NAME, DataType.of(String.class), true, false);
     }
 
-    public SchemaBuilder registerOperation(ExtensionOperation operation)
+    public SchemaBuilder registerOperation(Operation operation)
     {
         String typeName = StringUtils.capitalize(operation.getName()) + SchemaConstants.TYPE_SUFFIX;
         registerProcessorElement(operation.getName(), typeName, operation.getDescription());
@@ -282,7 +279,7 @@ public class SchemaBuilder
      * top level type while assigning it a name. This method will not register
      * the same type twice even if requested to
      *
-     * @param type        a {@link org.mule.extensions.introspection.api.DataType} referencing a pojo type
+     * @param type        a {@link DataType} referencing a pojo type
      * @param description the type's description
      * @return the reference name of the complexType
      */
@@ -493,7 +490,7 @@ public class SchemaBuilder
         return complexContentExtension;
     }
 
-    private Attribute createAttribute(ExtensionParameter parameter, boolean required)
+    private Attribute createAttribute(Parameter parameter, boolean required)
     {
         return createAttribute(parameter.getName(), parameter.getDescription(), parameter.getType(), required, parameter.isDynamic());
     }
@@ -544,7 +541,7 @@ public class SchemaBuilder
         return attribute;
     }
 
-    private void generateCollectionElement(ExplicitGroup all, ExtensionParameter parameter, boolean forceOptional)
+    private void generateCollectionElement(ExplicitGroup all, Parameter parameter, boolean forceOptional)
     {
         boolean required = isRequired(parameter, forceOptional);
         generateCollectionElement(all, parameter.getName(), parameter.getDescription(), parameter.getType(), required);
@@ -641,7 +638,7 @@ public class SchemaBuilder
         schema.getSimpleTypeOrComplexTypeOrGroup().add(element);
     }
 
-    private void registerExtendedType(QName base, String name, List<ExtensionParameter> parameters)
+    private void registerExtendedType(QName base, String name, List<Parameter> parameters)
     {
         TopLevelComplexType complexType = new TopLevelComplexType();
         complexType.setName(name);
@@ -660,7 +657,7 @@ public class SchemaBuilder
 
         int requiredChildElements = countRequiredChildElements(parameters);
 
-        for (final ExtensionParameter parameter : parameters)
+        for (final Parameter parameter : parameters)
         {
             DataType parameterType = parameter.getType();
             DataQualifier parameterQualifier = parameterType.getQualifier();
@@ -706,10 +703,10 @@ public class SchemaBuilder
         schema.getSimpleTypeOrComplexTypeOrGroup().add(complexType);
     }
 
-    private int countRequiredChildElements(List<ExtensionParameter> parameters)
+    private int countRequiredChildElements(List<Parameter> parameters)
     {
         int requiredChildElements = 0;
-        for (ExtensionParameter parameter : parameters)
+        for (Parameter parameter : parameters)
         {
             DataType type = parameter.getType();
             if (requiresChildElements(type))
@@ -736,7 +733,7 @@ public class SchemaBuilder
                 OPERATION.equals(genericTypes[0].getQualifier()));
     }
 
-    private void registerProcessorType(String name, ExtensionOperation operation)
+    private void registerProcessorType(String name, Operation operation)
     {
         registerExtendedType(SchemaConstants.MULE_ABSTRACT_MESSAGE_PROCESSOR_TYPE, name, operation.getParameters());
     }

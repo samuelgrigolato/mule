@@ -6,9 +6,8 @@
  */
 package org.mule.module.extensions.internal.introspection;
 
-import org.mule.extensions.introspection.api.DataQualifier;
-import org.mule.extensions.introspection.api.DataQualifierVisitor;
-import org.mule.module.extensions.internal.BaseDataQualifierVisitor;
+import org.mule.extensions.introspection.DataQualifier;
+import org.mule.extensions.introspection.DataQualifierVisitor;
 
 /**
  * Base implementation for a {@link DataQualifierVisitor} which adds the new
@@ -21,7 +20,6 @@ import org.mule.module.extensions.internal.BaseDataQualifierVisitor;
  * <li>{@link #onDouble()}</li>
  * <li>{@link #onDecimal()}</li>
  * <li>{@link #onString()}</li>
- * <li>{@link #onShort()}</li>
  * <li>{@link #onLong()}</li>
  * <li>{@link #onByte()}</li>
  * <li>{@link #onEnum()}</li>
@@ -63,12 +61,6 @@ public abstract class SimpleTypeDataQualifierVisitor extends BaseDataQualifierVi
 
     @Override
     public void onString()
-    {
-        onSimpleType();
-    }
-
-    @Override
-    public void onShort()
     {
         onSimpleType();
     }

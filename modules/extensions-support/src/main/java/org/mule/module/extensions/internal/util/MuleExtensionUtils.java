@@ -9,13 +9,10 @@ package org.mule.module.extensions.internal.util;
 import static org.mule.util.Preconditions.checkArgument;
 import org.mule.api.MuleContext;
 import org.mule.api.context.MuleContextAware;
-import org.mule.extensions.introspection.api.Builder;
-import org.mule.extensions.introspection.api.DataQualifier;
-import org.mule.extensions.introspection.api.DataType;
-import org.mule.extensions.introspection.api.Described;
-import org.mule.extensions.introspection.api.ExtensionConfiguration;
-import org.mule.extensions.introspection.api.ExtensionOperation;
-import org.mule.extensions.introspection.api.ExtensionParameter;
+import org.mule.extensions.introspection.Configuration;
+import org.mule.extensions.introspection.Described;
+import org.mule.extensions.introspection.Operation;
+import org.mule.extensions.introspection.Parameter;
 import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
 import org.mule.util.TemplateParser;
 
@@ -30,6 +27,7 @@ import com.google.common.collect.Multisets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -61,7 +59,7 @@ public final class MuleExtensionUtils
      * which means that name clashes can only occur against each other and not within the
      * inner elements of each collection
      */
-    public static void checkNamesClashes(Collection<ExtensionConfiguration> configurations, Collection<ExtensionOperation> operations)
+    public static void checkNamesClashes(Collection<Configuration> configurations, Collection<Operation> operations)
     {
         List<Described> all = new ArrayList<>(configurations.size() + operations.size());
         all.addAll(configurations);
@@ -107,22 +105,6 @@ public final class MuleExtensionUtils
         return repeatedNames;
     }
 
-    public static <T> List<T> build(Collection<? extends Builder<T>> builders)
-    {
-        if (CollectionUtils.isEmpty(builders))
-        {
-            return Collections.emptyList();
-        }
-
-        List<T> built = new ArrayList<>(builders.size());
-        for (Builder<T> builder : builders)
-        {
-            built.add(builder.build());
-        }
-
-        return built;
-    }
-
     public static <T> List<T> immutableList(Collection<T> collection)
     {
         return collection != null ? ImmutableList.copyOf(collection) : ImmutableList.<T>of();
@@ -139,28 +121,10 @@ public final class MuleExtensionUtils
         return map.build();
     }
 
-    public static Map<Class<?>, Object> toClassMap(Collection<?> objects)
+    public static void checkSetters(Class<?> declaringClass, Collection<Parameter> parameters)
     {
-        ImmutableMap.Builder<Class<?>, Object> map = ImmutableMap.builder();
-        for (Object object : objects)
-        {
-            map.put(object.getClass(), object);
-        }
-
-        return map.build();
-    }
-
-    public static boolean isListOf(DataType type, DataQualifier of)
-    {
-        return DataQualifier.LIST.equals(type.getQualifier()) &&
-               type.getGenericTypes().length > 0 &&
-               of.equals(type.getGenericTypes()[0].getQualifier());
-    }
-
-    public static void checkSetters(Class<?> declaringClass, Collection<ExtensionParameter> parameters)
-    {
-        Set<ExtensionParameter> faultParameters = new HashSet<>(parameters.size());
-        for (ExtensionParameter parameter : parameters)
+        Set<Parameter> faultParameters = new HashSet<>(parameters.size());
+        for (Parameter parameter : parameters)
         {
             if (!IntrospectionUtils.hasSetter(declaringClass, parameter))
             {
@@ -173,7 +137,7 @@ public final class MuleExtensionUtils
             StringBuilder message = new StringBuilder("The following attributes don't have a valid setter on class ")
                     .append(declaringClass.getName()).append(":\n");
 
-            for (ExtensionParameter parameter : faultParameters)
+            for (Parameter parameter : faultParameters)
             {
                 message.append(parameter.getName()).append("\n");
             }
@@ -227,4 +191,19 @@ public final class MuleExtensionUtils
         }
     }
 
+    public static <T extends Described> List<T> alphaSortDescribedList(List<T> list)
+    {
+        Collections.sort(list, new DescribedComparator());
+        return list;
+    }
+
+    private static class DescribedComparator implements Comparator<Described>
+    {
+
+        @Override
+        public int compare(Described o1, Described o2)
+        {
+            return o1.getName().compareTo(o2.getName());
+        }
+    }
 }

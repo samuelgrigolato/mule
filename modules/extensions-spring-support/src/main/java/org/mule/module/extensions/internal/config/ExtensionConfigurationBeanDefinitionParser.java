@@ -6,21 +6,22 @@
  */
 package org.mule.module.extensions.internal.config;
 
+import static org.mule.module.extensions.internal.config.XmlExtensionParserUtils.applyLifecycle;
+import static org.mule.module.extensions.internal.config.XmlExtensionParserUtils.setNoRecurseOnDefinition;
+import static org.mule.module.extensions.internal.config.XmlExtensionParserUtils.toElementDescriptorBeanDefinition;
 import org.mule.config.spring.parsers.generic.AutoIdUtils;
-import org.mule.extensions.introspection.api.Extension;
-import org.mule.extensions.introspection.api.ExtensionConfiguration;
-import org.mule.extensions.introspection.api.ExtensionParameter;
-import org.mule.module.extensions.internal.runtime.resolver.ResolverSet;
-import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
+import org.mule.extensions.introspection.Configuration;
+import org.mule.extensions.introspection.Extension;
 
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.xml.BeanDefinitionParser;
 import org.springframework.beans.factory.xml.ParserContext;
 import org.w3c.dom.Element;
 
 /**
  * Generic implementation of {@link org.springframework.beans.factory.xml.BeanDefinitionParser}
- * capable of parsing any {@link org.mule.extensions.introspection.api.ExtensionConfiguration}
+ * capable of parsing any {@link Configuration}
  * <p/>
  * It supports simple attributes, pojos, lists/sets of simple attributes, list/sets of beans,
  * and maps of simple attributes
@@ -30,48 +31,33 @@ import org.w3c.dom.Element;
  *
  * @since 3.7.0
  */
-abstract class ExtensionConfigurationBeanDefinitionParser extends ExtensionBeanDefinitionParser
+public final class ExtensionConfigurationBeanDefinitionParser implements BeanDefinitionParser
 {
 
     private final Extension extension;
-    protected final ExtensionConfiguration configuration;
+    protected final Configuration configuration;
 
-    public ExtensionConfigurationBeanDefinitionParser(Extension extension, ExtensionConfiguration configuration)
+    public ExtensionConfigurationBeanDefinitionParser(Extension extension, Configuration configuration)
     {
         this.extension = extension;
         this.configuration = configuration;
     }
 
     @Override
-    public final BeanDefinition parse(Element element, ParserContext parserContext)
+    public BeanDefinition parse(Element element, ParserContext parserContext)
     {
-        BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(getResolverClass());
+        BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(ExtensionConfigurationFactoryBean.class);
         builder.setScope(BeanDefinition.SCOPE_SINGLETON);
-        applyLifecycle(builder);
+
         parseConfigName(element, builder);
+        builder.addConstructorArgValue(configuration);
+        builder.addConstructorArgValue(toElementDescriptorBeanDefinition(element));
 
-        doParse(element, builder, parserContext);
-
+        applyLifecycle(builder);
         BeanDefinition definition = builder.getBeanDefinition();
         setNoRecurseOnDefinition(definition);
 
         return definition;
-    }
-
-    protected abstract Class<? extends ValueResolver> getResolverClass();
-
-    protected abstract void doParse(Element element, BeanDefinitionBuilder builder, ParserContext parserContext);
-
-    protected ResolverSet getResolverSet(Element element)
-    {
-        ResolverSet resolverSet = new ResolverSet();
-
-        for (ExtensionParameter parameter : configuration.getParameters())
-        {
-            resolverSet.add(parameter, parseParameter(element, parameter));
-        }
-
-        return resolverSet;
     }
 
     private void parseConfigName(Element element, BeanDefinitionBuilder builder)

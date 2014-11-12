@@ -9,12 +9,14 @@ package org.mule.module.extensions.internal.resources;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
+import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.mule.extensions.introspection.api.Extension;
-import org.mule.extensions.introspection.api.capability.XmlCapability;
-import org.mule.extensions.resources.api.GenerableResource;
-import org.mule.extensions.resources.api.ResourcesGenerator;
+import org.mule.api.registry.ServiceRegistry;
+import org.mule.extensions.introspection.Extension;
+import org.mule.extensions.introspection.capability.XmlCapability;
+import org.mule.extensions.resources.GenerableResource;
+import org.mule.extensions.resources.ResourcesGenerator;
 import org.mule.module.extensions.internal.capability.xml.ImmutableXmlCapability;
 import org.mule.module.extensions.internal.capability.xml.SpringBundleResourceContributor;
 import org.mule.module.extensions.internal.config.ExtensionsNamespaceHandler;
@@ -48,6 +50,9 @@ public class SpringBundleResourceContributorTestCase extends AbstractMuleTestCas
     @Mock
     private Extension extension;
 
+    @Mock(answer = RETURNS_DEEP_STUBS)
+    private ServiceRegistry serviceRegistry;
+
     private ResourcesGenerator generator;
 
     private XmlCapability xmlCapability;
@@ -62,7 +67,7 @@ public class SpringBundleResourceContributorTestCase extends AbstractMuleTestCas
         capabilities.add(xmlCapability);
         when(extension.getCapabilities(XmlCapability.class)).thenReturn(capabilities);
 
-        generator = new AnnotationProcessorResourceGenerator(mock(ProcessingEnvironment.class));
+        generator = new AnnotationProcessorResourceGenerator(mock(ProcessingEnvironment.class), serviceRegistry);
 
         when(extension.getName()).thenReturn(EXTENSION_NAME);
         when(extension.getVersion()).thenReturn(EXTENSION_VERSION);

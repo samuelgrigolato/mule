@@ -6,15 +6,21 @@
  */
 package org.mule.tck.junit4;
 
+import org.mule.DefaultMuleContext;
 import org.mule.api.MuleContext;
-import org.mule.extensions.introspection.api.Extension;
-import org.mule.extensions.introspection.api.ExtensionBuilder;
-import org.mule.extensions.resources.api.GenerableResource;
-import org.mule.extensions.resources.api.ResourcesGenerator;
+import org.mule.api.config.ConfigurationBuilder;
+import org.mule.api.registry.SPIServiceRegistry;
+import org.mule.api.registry.ServiceRegistry;
+import org.mule.config.builders.AbstractConfigurationBuilder;
+import org.mule.extensions.ExtensionsManager;
+import org.mule.extensions.introspection.Describer;
+import org.mule.extensions.introspection.Extension;
+import org.mule.extensions.introspection.ExtensionFactory;
+import org.mule.extensions.resources.GenerableResource;
+import org.mule.extensions.resources.ResourcesGenerator;
 import org.mule.extensions.resources.spi.GenerableResourceContributor;
-import org.mule.module.extensions.internal.ImmutableExtensionDescribingContext;
-import org.mule.module.extensions.internal.introspection.DefaultExtensionBuilder;
-import org.mule.module.extensions.internal.introspection.DefaultExtensionDescriber;
+import org.mule.module.extensions.internal.DefaultExtensionsManager;
+import org.mule.module.extensions.internal.introspection.DefaultExtensionFactory;
 import org.mule.module.extensions.internal.resources.AbstractResourcesGenerator;
 import org.mule.util.ArrayUtils;
 import org.mule.util.IOUtils;
@@ -25,13 +31,9 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.LinkedList;
 import java.util.List;
 
-import javax.imageio.spi.ServiceRegistry;
-
 import org.apache.commons.io.FileUtils;
-import org.reflections.Reflections;
 
 /**
  * Base test class for {@link org.mule.tck.junit4.FunctionalTestCase}s
@@ -41,85 +43,94 @@ import org.reflections.Reflections;
  * {@link org.mule.tck.junit4.FunctionalTestCase} is that before creating
  * the {@link org.mule.api.MuleContext}, it scans certain packages of the
  * classpath and discovers extensions. Once those are discovered and described,
- * a {@link org.mule.extensions.resources.api.ResourcesGenerator} is used to automatically
+ * a {@link ResourcesGenerator} is used to automatically
  * generate any backing resources needed (for example, XSD schemas, spring bundles,
  * service registration files, etc).
  * <p/>
  * In this way, the user experience is greatly simplified when running the test
  * either through an IDE or build tool such as maven or gradle.
  * <p/>
- * By default, the only packaged scanned for extensions is
- * &quot;org.mule.extension&quot; but that can be customized
- * by overriding the {@link #getDiscoverablePackages()} method
+ * Since this class extends {@link FunctionalTestCase}, a new {@link MuleContext}
+ * is created per each test. That also means that a new {@link ExtensionsManager}
+ * is created per test. By default, standard extension discovery will be
+ * performed by invoking {@link ExtensionsManager#discoverExtensions(ClassLoader)}.
+ * Although this behavior suits most use cases, it can be time consuming because of
+ * all the classpath scanning and the time consumed by initialising extensions that
+ * are most likely not used in this tests. As the number of extensions available grows,
+ * the worst that overhead becomes. For that reason, you can choose to
+ * implement the {@link #getManagedDescribers()} method and only provide the
+ * {@link Describer}s of the extensions that you will actually use
  *
- * @since 3.6.0
+ * @since 3.7.0
  */
 public abstract class ExtensionsFunctionalTestCase extends FunctionalTestCase
 {
 
+    private final ServiceRegistry serviceRegistry = new SPIServiceRegistry();
+    private final ExtensionFactory extensionFactory = new DefaultExtensionFactory(serviceRegistry);
+    private ExtensionsManager extensionsManager = new DefaultExtensionsManager();
+    private File generatedResourcesDirectory;
+
+
     @Override
-    protected MuleContext createMuleContext() throws Exception
+    protected void doSetUpBeforeMuleContextCreation() throws Exception
     {
-        discoverExtensions();
-        return super.createMuleContext();
+        super.doSetUpBeforeMuleContextCreation();
+        createExtensionsManager();
     }
 
     /**
-     * Returns an array with the packages that are to be scanned
-     */
-    protected String[] getDiscoverablePackages()
-    {
-        return new String[] {"org.mule.extension"};
-    }
-
-    /**
-     * Returns an array with extension types for which this test should
-     * generate resources. This is useful when several extensions exist in the same
-     * package but you want to focus the test on only a subset of them.
-     * If this method returns {@code null} or an empty array, then all discovered
-     * extensions will get resources generated. Otherwise, discovered extensions
-     * not listed here will depend exclusively on whatever resources are already
-     * present on the classpath.
+     * Implement this method to limit the amount of extensions
+     * initialised by providing the {@link Describer}s for
+     * the extensions that you actually want to use for this test.
+     * Returning a {@code null} or empty array forces the
+     * {@link ExtensionsManager} to perform a full classpath discovery.
      * Default implementation of this method returns {@code null}
      */
-    protected Class<?>[] getManagedExtensionTypes()
+    protected Describer[] getManagedDescribers()
     {
         return null;
     }
 
-    private List<GenerableResourceContributor> getGenerableResourceContributors()
+    @Override
+    protected final void addBuilders(List<ConfigurationBuilder> builders)
     {
-        return ImmutableList.copyOf(ServiceRegistry.lookupProviders(GenerableResourceContributor.class));
+        super.addBuilders(builders);
+        builders.add(0, new AbstractConfigurationBuilder()
+        {
+            @Override
+            protected void doConfigure(MuleContext muleContext) throws Exception
+            {
+                ((DefaultMuleContext) muleContext).setExtensionsManager(extensionsManager);
+            }
+        });
     }
 
-    private void discoverExtensions() throws Exception
+    private List<GenerableResourceContributor> getGenerableResourceContributors()
     {
-        Reflections reflections = new Reflections(getDiscoverablePackages());
-        List<Extension> extensions = new LinkedList<>();
+        return ImmutableList.copyOf(serviceRegistry.lookupProviders(GenerableResourceContributor.class));
+    }
 
-        Class<?>[] managedExtensionTypes = getManagedExtensionTypes();
-        final boolean filtersExtensions = managedExtensionTypes != null && managedExtensionTypes.length > 0;
+    private void createExtensionsManager() throws Exception
+    {
+        extensionsManager = new DefaultExtensionsManager();
 
-        for (Class<?> extensionType : reflections.getTypesAnnotatedWith(org.mule.extensions.api.annotation.Extension.class))
+        Describer[] describers = getManagedDescribers();
+        if (ArrayUtils.isEmpty(describers))
         {
-            if (filtersExtensions && !ArrayUtils.contains(managedExtensionTypes, extensionType))
-            {
-                continue;
-            }
-
-            ExtensionBuilder builder = DefaultExtensionBuilder.newBuilder();
-
-            new DefaultExtensionDescriber().describe(new ImmutableExtensionDescribingContext(extensionType, builder));
-
-            extensions.add(builder.build());
+            extensionsManager.discoverExtensions(muleContext.getExecutionClassLoader());
+        }
+        else
+        {
+            loadExtensionsFromDescribers(extensionsManager, describers);
         }
 
-        File targetDirectory = getGenerationTargetDirectory();
+        generatedResourcesDirectory = getGenerationTargetDirectory();
 
-        ResourcesGenerator generator = new ExtensionsTestInfrastructureResourcesGenerator(targetDirectory);
+        ResourcesGenerator generator = new ExtensionsTestInfrastructureResourcesGenerator(serviceRegistry, generatedResourcesDirectory);
 
         List<GenerableResourceContributor> resourceContributors = getGenerableResourceContributors();
-        for (Extension extension : extensions)
+        for (Extension extension : extensionsManager.getExtensions())
         {
             for (GenerableResourceContributor contributor : resourceContributors)
             {
@@ -130,6 +141,14 @@ public abstract class ExtensionsFunctionalTestCase extends FunctionalTestCase
         generateResourcesAndAddToClasspath(generator);
     }
 
+    private void loadExtensionsFromDescribers(ExtensionsManager extensionsManager, Describer[] describers)
+    {
+        for (Describer describer : describers)
+        {
+            extensionsManager.registerExtension(extensionFactory.createFrom(describer.describe()));
+        }
+    }
+
     private void generateResourcesAndAddToClasspath(ResourcesGenerator generator) throws Exception
     {
         ClassLoader cl = getClass().getClassLoader();
@@ -138,7 +157,7 @@ public abstract class ExtensionsFunctionalTestCase extends FunctionalTestCase
 
         for (GenerableResource resource : generator.dumpAll())
         {
-            URL generatedResourceURL = new File(resource.getFilePath()).toURI().toURL();
+            URL generatedResourceURL = new File(generatedResourcesDirectory, resource.getFilePath()).toURI().toURL();
             method.invoke(cl, generatedResourceURL);
         }
     }
@@ -201,8 +220,9 @@ public abstract class ExtensionsFunctionalTestCase extends FunctionalTestCase
 
         private File targetDirectory;
 
-        private ExtensionsTestInfrastructureResourcesGenerator(File targetDirectory)
+        private ExtensionsTestInfrastructureResourcesGenerator(ServiceRegistry serviceRegistry, File targetDirectory)
         {
+            super(serviceRegistry);
             this.targetDirectory = targetDirectory;
         }
 

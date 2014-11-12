@@ -9,8 +9,7 @@ package org.mule.module.extensions.internal.runtime.resolver;
 import static org.mule.util.Preconditions.checkArgument;
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
-import org.mule.api.context.MuleContextAware;
-import org.mule.api.lifecycle.Initialisable;
+import org.mule.api.lifecycle.LifecycleUtils;
 import org.mule.api.lifecycle.Startable;
 
 /**
@@ -58,15 +57,7 @@ public class InitialLifecycleValueResolver extends BaseValueResolverWrapper
     {
         Object resolved = delegate.resolve(event);
 
-        if (resolved instanceof MuleContextAware)
-        {
-            ((MuleContextAware) resolved).setMuleContext(muleContext);
-        }
-
-        if (resolved instanceof Initialisable)
-        {
-            ((Initialisable) resolved).initialise();
-        }
+        LifecycleUtils.initialiseIfNeeded(resolved, muleContext);
 
         if (resolved instanceof Startable)
         {
