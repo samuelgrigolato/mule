@@ -7,8 +7,10 @@
 package org.mule.module.extensions.internal.introspection;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.mule.module.extensions.internal.introspection.MuleExtensionAnnotationParser.getConfigurableFields;
 import static org.mule.module.extensions.internal.introspection.MuleExtensionAnnotationParser.getDefaultValue;
 import static org.mule.module.extensions.internal.introspection.MuleExtensionAnnotationParser.getExtension;
+import static org.mule.module.extensions.internal.introspection.MuleExtensionAnnotationParser.getOperationMethods;
 import static org.mule.util.Preconditions.checkArgument;
 import org.mule.api.registry.SPIServiceRegistry;
 import org.mule.extensions.annotations.Configurable;
@@ -26,6 +28,7 @@ import org.mule.extensions.introspection.declaration.DeclarationConstruct;
 import org.mule.extensions.introspection.declaration.OperationConstruct;
 import org.mule.extensions.introspection.declaration.ParameterConstruct;
 import org.mule.module.extensions.internal.util.IntrospectionUtils;
+import org.mule.util.CollectionUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -89,6 +92,8 @@ public class AnnotationsBasedDescriber implements Describer
 
     private void declareConfiguration(DeclarationConstruct declaration, Class<?> extensionType)
     {
+        checkArgument(CollectionUtils.isEmpty(getOperationMethods(extensionType)), String.format("Class %s can't declare a configuration and operations at the same time", extensionType.getName()));
+
         ConfigurationConstruct configuration;
 
         Configuration configurationAnnotation = extensionType.getAnnotation(Configuration.class);
@@ -103,7 +108,7 @@ public class AnnotationsBasedDescriber implements Describer
 
         configuration.instantiatedWith(new TypeAwareConfigurationInstantiator(extensionType));
 
-        for (Field field : MuleExtensionAnnotationParser.getConfigurableFields(extensionType))
+        for (Field field : getConfigurableFields(extensionType))
         {
             Configurable configurable = field.getAnnotation(Configurable.class);
             Optional optional = field.getAnnotation(Optional.class);
@@ -146,7 +151,7 @@ public class AnnotationsBasedDescriber implements Describer
 
     private void declareOperation(DeclarationConstruct declaration, Class<?> actingClass)
     {
-        for (Method method : MuleExtensionAnnotationParser.getOperationMethods(actingClass))
+        for (Method method : getOperationMethods(actingClass))
         {
             Operation annotation = method.getAnnotation(Operation.class);
             OperationConstruct operation = declaration.withOperation(resolveOperationName(method, annotation))

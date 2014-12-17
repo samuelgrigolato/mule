@@ -7,20 +7,15 @@
 package org.mule.module.extensions;
 
 import org.mule.api.MuleContext;
-import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
-import org.mule.api.MuleMessage;
-import org.mule.api.NestedProcessor;
 import org.mule.api.context.MuleContextAware;
 import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.lifecycle.Lifecycle;
-import org.mule.api.transport.PropertyScope;
 import org.mule.extensions.annotations.Configurable;
 import org.mule.extensions.annotations.Extension;
-import org.mule.extensions.annotations.Operation;
+import org.mule.extensions.annotations.Operations;
 import org.mule.extensions.annotations.capability.Xml;
 import org.mule.extensions.annotations.param.Optional;
-import org.mule.extensions.annotations.param.Payload;
 
 import java.math.BigDecimal;
 import java.util.Calendar;
@@ -31,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Extension(name = HeisenbergExtension.EXTENSION_NAME, description = HeisenbergExtension.EXTENSION_DESCRIPTION, version = HeisenbergExtension.EXTENSION_VERSION)
+@Operations({HeisenbergOperations.class})
 @Xml(schemaLocation = HeisenbergExtension.SCHEMA_LOCATION, namespace = HeisenbergExtension.NAMESPACE, schemaVersion = HeisenbergExtension.SCHEMA_VERSION)
 public class HeisenbergExtension implements Lifecycle, MuleContextAware
 {
@@ -99,54 +95,6 @@ public class HeisenbergExtension implements Lifecycle, MuleContextAware
 
     @Configurable
     private HealthStatus finalHealth;
-
-
-    @Operation
-    public String sayMyName()
-    {
-        return myName;
-    }
-
-    @Operation
-    public String getEnemy(int index)
-    {
-        return enemies.get(index);
-    }
-
-    @Operation
-    public String kill(@Payload String goodbyeMessage,
-                       NestedProcessor enemiesLookup) throws Exception
-    {
-
-        return killWithCustomMessage(goodbyeMessage, enemiesLookup);
-    }
-
-    @Operation
-    public String killWithCustomMessage(@Optional(defaultValue = "#[payload]") String goodbyeMessage,
-                                        NestedProcessor enemiesLookup) throws Exception
-    {
-        List<String> toKill = (List<String>) enemiesLookup.process();
-        StringBuilder builder = new StringBuilder();
-
-        for (String kill : toKill)
-        {
-            builder.append(String.format("%s: %s", goodbyeMessage, kill)).append("\n");
-        }
-
-        return builder.toString();
-    }
-
-    @Operation
-    public void hideMethInEvent(MuleEvent event)
-    {
-        hideMethInMessage(event.getMessage());
-    }
-
-    @Operation
-    public void hideMethInMessage(MuleMessage message)
-    {
-        message.setProperty("secretPackage", "meth", PropertyScope.INVOCATION);
-    }
 
     @Override
     public void initialise() throws InitialisationException

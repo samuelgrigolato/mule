@@ -22,6 +22,7 @@ import static org.mule.module.extensions.HeisenbergExtension.SCHEMA_LOCATION;
 import static org.mule.module.extensions.HeisenbergExtension.SCHEMA_VERSION;
 import org.mule.extensions.annotations.Configurable;
 import org.mule.extensions.annotations.Configurations;
+import org.mule.extensions.annotations.Operations;
 import org.mule.extensions.annotations.capability.Xml;
 import org.mule.extensions.introspection.DataType;
 import org.mule.extensions.introspection.Describer;
@@ -34,6 +35,7 @@ import org.mule.extensions.introspection.declaration.ParameterDeclaration;
 import org.mule.module.extensions.Door;
 import org.mule.module.extensions.HealthStatus;
 import org.mule.module.extensions.HeisenbergExtension;
+import org.mule.module.extensions.HeisenbergOperations;
 import org.mule.module.extensions.Ricin;
 import org.mule.module.extensions.internal.introspection.AnnotationsBasedDescriber;
 import org.mule.tck.junit4.AbstractMuleTestCase;
@@ -116,6 +118,12 @@ public class AnnotationsBasedDescriberTestCase extends AbstractMuleTestCase
         assertThat(configuration.getName(), equalTo(EXTENDED_CONFIG_NAME));
         assertThat(configuration.getParameters(), hasSize(1));
         assertParameter(configuration.getParameters(), "extendedProperty", "", DataType.of(String.class), true, true, null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void heisenbergWithOperationsConfig() throws Exception
+    {
+        describerFor(HeisenbergWithOperations.class).describe();
     }
 
     private void assertTestModuleConfiguration(Declaration declaration) throws Exception
@@ -253,6 +261,7 @@ public class AnnotationsBasedDescriberTestCase extends AbstractMuleTestCase
     @org.mule.extensions.annotations.Extension(name = EXTENSION_NAME, description = EXTENSION_DESCRIPTION, version = EXTENSION_VERSION)
     @Xml(schemaLocation = SCHEMA_LOCATION, namespace = NAMESPACE, schemaVersion = SCHEMA_VERSION)
     @Configurations(HeisenbergExtension.class)
+    @Operations({HeisenbergOperations.class})
     public static class HeisenbergPointer extends HeisenbergExtension
     {
 
@@ -261,15 +270,27 @@ public class AnnotationsBasedDescriberTestCase extends AbstractMuleTestCase
     @org.mule.extensions.annotations.Extension(name = EXTENSION_NAME, description = EXTENSION_DESCRIPTION, version = EXTENSION_VERSION)
     @Xml(schemaLocation = SCHEMA_LOCATION, namespace = NAMESPACE, schemaVersion = SCHEMA_VERSION)
     @Configurations({HeisenbergExtension.class, NamedHeisenbergAlternateConfig.class})
+    @Operations({HeisenbergOperations.class})
     public static class HeisengergPointerPlusExternalConfig
     {
 
     }
 
     @org.mule.extensions.annotations.Configuration(name = EXTENDED_CONFIG_NAME, description = EXTENDED_CONFIG_DESCRIPTION)
+    @Operations({HeisenbergOperations.class})
     public static class NamedHeisenbergAlternateConfig extends HeisenbergAlternateConfig
     {
 
+    }
+
+    @org.mule.extensions.annotations.Extension(name = EXTENSION_NAME, description = EXTENSION_DESCRIPTION, version = EXTENSION_VERSION)
+    public static class HeisenbergWithOperations extends HeisenbergExtension
+    {
+
+        @org.mule.extensions.annotations.Operation
+        public void invalid()
+        {
+        }
     }
 
     public static class HeisenbergAlternateConfig
