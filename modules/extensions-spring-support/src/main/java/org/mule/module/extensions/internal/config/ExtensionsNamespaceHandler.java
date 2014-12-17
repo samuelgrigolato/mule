@@ -6,13 +6,23 @@
  */
 package org.mule.module.extensions.internal.config;
 
+import static org.mule.module.extensions.internal.util.NameUtils.getGlobalPojoTypeName;
+import static org.mule.module.extensions.internal.util.NameUtils.hyphenize;
 import static org.mule.util.Preconditions.checkState;
 import org.mule.config.spring.MuleArtifactContext;
 import org.mule.extensions.ExtensionsManager;
+import org.mule.extensions.introspection.Configuration;
+import org.mule.extensions.introspection.DataType;
 import org.mule.extensions.introspection.Described;
 import org.mule.extensions.introspection.Extension;
+import org.mule.extensions.introspection.Operation;
+import org.mule.extensions.introspection.Parameter;
 import org.mule.extensions.introspection.capability.XmlCapability;
-import org.mule.util.ClassUtils;
+import org.mule.module.extensions.internal.introspection.BaseDataQualifierVisitor;
+import org.mule.util.ArrayUtils;
+
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -40,7 +50,8 @@ public class ExtensionsNamespaceHandler extends NamespaceHandlerSupport
 {
 
     private ExtensionsManager extensionsManager;
-    private Map<String, Extension> handledExtensions = new HashMap<>();
+    private final Map<String, Extension> handledExtensions = new HashMap<>();
+    private final Multimap<Extension, String> topLevelParameters = HashMultimap.create();
 
     /**
      * Attempts to get a hold on a {@link ExtensionsManager}
@@ -82,10 +93,9 @@ public class ExtensionsNamespaceHandler extends NamespaceHandlerSupport
         {
             Extension extension = locateExtensionByNamespace(namespace);
 
-            //TODO: Configuration parser should be determined based on capabilities
-            register(extension, extension.getConfigurations(), ExtensionConfigurationBeanDefinitionParser.class);
-
-            register(extension, extension.getOperations(), ExtensionOperationBeanDefinitionParser.class);
+            registerTopLevelParameters(extension);
+            registerConfigurations(extension);
+            registerOperations(extension);
 
             handledExtensions.put(namespace, extension);
         }
@@ -93,16 +103,120 @@ public class ExtensionsNamespaceHandler extends NamespaceHandlerSupport
         {
             parserContext.getReaderContext().fatal(e.getMessage(), element, e);
         }
-
     }
 
-    private void register(Extension extension, Collection<? extends Described> objects, Class<? extends BeanDefinitionParser> parserType) throws Exception
+    private void registerOperations(Extension extension) throws Exception
+    {
+        register(extension.getOperations(), new ParserFactory()
+        {
+            @Override
+            public BeanDefinitionParser createParser(Object... params)
+            {
+                return new ExtensionOperationBeanDefinitionParser((Operation) params[0]);
+            }
+        });
+    }
+
+    private void registerConfigurations(Extension extension) throws Exception
+    {
+        register(extension.getConfigurations(), new ParserFactory()
+        {
+            @Override
+            public BeanDefinitionParser createParser(Object... params)
+            {
+                return new ConfigurationBeanDefinitionParser((Configuration) params[0]);
+            }
+        });
+    }
+
+    private void register(Collection<? extends Described> objects, ParserFactory factory) throws Exception
     {
         for (Described described : objects)
         {
-            registerBeanDefinitionParser(described.getName(), ClassUtils.instanciateClass(parserType, extension, described));
+            registerBeanDefinitionParser(described.getName(), factory.createParser(described));
         }
     }
+
+    private void registerTopLevelParameters(Extension extension)
+    {
+        ParserFactory factory = new ParserFactory()
+        {
+            @Override
+            public BeanDefinitionParser createParser(Object... params)
+            {
+                return new TopLevelParameterTypeBeanDefinitionParser((DataType) params[0]);
+            }
+        };
+
+        for (Configuration configuration : extension.getConfigurations())
+        {
+            registerTopLevelParameter(extension, configuration.getParameters(), factory);
+        }
+
+        for (Operation operation : extension.getOperations())
+        {
+            registerTopLevelParameter(extension, operation.getParameters(), factory);
+        }
+    }
+
+    private void registerTopLevelParameter(final Extension extension, final DataType parameterType, final ParserFactory factory)
+    {
+        parameterType.getQualifier().accept(new BaseDataQualifierVisitor()
+        {
+
+            @Override
+            public void onPojo()
+            {
+                String name = hyphenize(getGlobalPojoTypeName(parameterType));
+                if (topLevelParameters.put(extension, name))
+                {
+                    registerBeanDefinitionParser(name, factory.createParser(parameterType));
+                }
+            }
+
+            @Override
+            public void onList()
+            {
+                if (!ArrayUtils.isEmpty(parameterType.getGenericTypes()))
+                {
+                    registerTopLevelParameter(extension, parameterType.getGenericTypes()[0], factory);
+                }
+            }
+
+            @Override
+            public void onMap()
+            {
+                DataType[] genericTypes = parameterType.getGenericTypes();
+                if (genericTypes == null)
+                {
+                    return;
+                }
+
+                if (genericTypes.length >= 1)
+                {
+                    DataType keyType = genericTypes[0];
+                    registerTopLevelParameter(extension, keyType, factory);
+                }
+
+                if (genericTypes.length >= 2)
+                {
+                    DataType valueType = parameterType.getGenericTypes()[0];
+                    valueType.getQualifier().accept(this);
+                    registerTopLevelParameter(extension, valueType, factory);
+                }
+            }
+        });
+
+    }
+
+    private void registerTopLevelParameter(Extension extension, Collection<Parameter> parameters, ParserFactory factory)
+    {
+        for (final Parameter parameter : parameters)
+        {
+            registerTopLevelParameter(extension, parameter.getType(), factory);
+        }
+    }
+
 
     private Extension locateExtensionByNamespace(String namespace)
     {
@@ -125,4 +239,9 @@ public class ExtensionsNamespaceHandler extends NamespaceHandlerSupport
         throw new IllegalArgumentException(String.format("Could not find extension associated to namespace %s", namespace));
     }
 
+    private interface ParserFactory
+    {
+
+        BeanDefinitionParser createParser(Object... params);
+    }
 }

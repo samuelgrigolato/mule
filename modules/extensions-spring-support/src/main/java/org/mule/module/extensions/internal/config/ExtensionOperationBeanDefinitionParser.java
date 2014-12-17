@@ -9,7 +9,6 @@ package org.mule.module.extensions.internal.config;
 import org.mule.config.spring.factories.PollingMessageSourceFactoryBean;
 import org.mule.config.spring.util.SpringXMLUtils;
 import org.mule.enricher.MessageEnricher;
-import org.mule.extensions.introspection.Extension;
 import org.mule.extensions.introspection.Operation;
 
 import java.util.List;
@@ -25,15 +24,13 @@ import org.springframework.beans.factory.xml.ParserContext;
 import org.springframework.util.xml.DomUtils;
 import org.w3c.dom.Element;
 
-public class ExtensionOperationBeanDefinitionParser implements BeanDefinitionParser
+final class ExtensionOperationBeanDefinitionParser implements BeanDefinitionParser
 {
 
-    private final Extension extension;
     private final Operation operation;
 
-    public ExtensionOperationBeanDefinitionParser(Extension extension, Operation operation)
+    ExtensionOperationBeanDefinitionParser(Operation operation)
     {
-        this.extension = extension;
         this.operation = operation;
     }
 

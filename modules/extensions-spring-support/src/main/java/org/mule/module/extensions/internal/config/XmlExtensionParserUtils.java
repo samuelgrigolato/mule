@@ -7,9 +7,13 @@
 package org.mule.module.extensions.internal.config;
 
 import static org.mule.module.extensions.internal.util.MuleExtensionUtils.isExpression;
+import static org.mule.module.extensions.internal.util.NameUtils.getGlobalPojoTypeName;
+import static org.mule.module.extensions.internal.util.NameUtils.hyphenize;
+import static org.mule.module.extensions.internal.util.NameUtils.singularize;
 import org.mule.api.lifecycle.Disposable;
 import org.mule.api.lifecycle.Initialisable;
 import org.mule.config.spring.MuleHierarchicalBeanDefinitionParserDelegate;
+import org.mule.config.spring.parsers.generic.AutoIdUtils;
 import org.mule.extensions.introspection.DataQualifierVisitor;
 import org.mule.extensions.introspection.DataType;
 import org.mule.extensions.introspection.Parameter;
@@ -64,6 +68,13 @@ final class XmlExtensionParserUtils
 
     private static final TemplateParser parser = TemplateParser.createMuleStyleParser();
     private static final ConversionService conversionService = new DefaultConversionService();
+
+    static void parseConfigName(Element element, BeanDefinitionBuilder builder)
+    {
+        String name = AutoIdUtils.getUniqueName(element, "mule-bean");
+        element.setAttribute("name", name);
+        builder.addConstructorArgValue(name);
+    }
 
     private static ValueResolver parseCollectionAsInnerElement(ElementDescriptor collectionElement,
                                                                String childElementName,
@@ -176,19 +187,21 @@ final class XmlExtensionParserUtils
      * parses a pojo which type is described by {@code pojoType},
      * recursively moving through the pojo's properties.
      *
-     * @param element           the XML element which has the bean as a child
-     * @param fieldName         the name of the field in which the parsed pojo is going to be assigned
-     * @param parentElementName the name of the the bean's top level XML element
-     * @param pojoType          a {@link DataType} describing the bean's type
+     * @param element          the XML element which has the bean as a child
+     * @param fieldName        the name of the field in which the parsed pojo is going to be assigned
+     * @param childElementName the name of the the bean's top level XML element
+     * @param pojoType         a {@link DataType} describing the bean's type
      * @return a {@link org.springframework.beans.factory.config.BeanDefinition} if the bean could be parsed, {@code null}
      * if the bean is not present on the XML definition
      */
     private static ValueResolver parsePojo(ElementDescriptor element,
                                            String fieldName,
-                                           String parentElementName,
+                                           String childElementName,
                                            DataType pojoType,
                                            Object defaultValue)
     {
+
+        // check if the pojo is referenced as an attribute
         ValueResolver resolver = getResolverFromAttribute(element, fieldName, pojoType, defaultValue);
 
         if (resolver != null)
@@ -196,13 +209,26 @@ final class XmlExtensionParserUtils
             return resolver;
         }
 
-        element = element.getChildByName(parentElementName);
+        // check if the pojo is defined inline as a child element
+        ElementDescriptor childElement = element.getChildByName(childElementName);
 
-        if (element == null)
+        if (childElement != null)
         {
-            return new StaticValueResolver(null);
+            return getPojoValueResolver(pojoType, childElement);
         }
 
+        // last chance, check if this is a top level element
+        if (getGlobalPojoTypeName(pojoType).equals(element.getName()))
+        {
+            return getPojoValueResolver(pojoType, element);
+        }
+
+        // pojo was not specified, take the coward's route and return a null resolver
+        return new StaticValueResolver(null);
+    }
+
+    private static ValueResolver getPojoValueResolver(DataType pojoType, ElementDescriptor element)
+    {
         return new ObjectBuilderValueResolver(recursePojoProperties(pojoType.getRawType(), element));
     }
 
@@ -226,7 +252,7 @@ final class XmlExtensionParserUtils
 
             if (resolver == null)
             {
-                parameterName = NameUtils.hyphenize(parameterName);
+                parameterName = hyphenize(parameterName);
                 ElementDescriptor childElement = element.getChildByName(parameterName);
                 if (childElement != null)
                 {
@@ -322,8 +348,8 @@ final class XmlExtensionParserUtils
                                       final DataType dataType,
                                       final Object defaultValue)
     {
-        final String hyphenizedFieldName = NameUtils.hyphenize(fieldName);
-        final String singularName = NameUtils.singularize(hyphenizedFieldName);
+        final String hyphenizedFieldName = hyphenize(fieldName);
+        final String singularName = singularize(hyphenizedFieldName);
         final ValueHolder<ValueResolver> resolverReference = new ValueHolder<>();
 
         DataQualifierVisitor visitor = new BaseDataQualifierVisitor()

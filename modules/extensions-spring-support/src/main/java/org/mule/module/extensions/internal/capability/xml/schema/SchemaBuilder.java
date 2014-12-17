@@ -12,6 +12,7 @@ import static org.mule.extensions.introspection.DataQualifier.OPERATION;
 import static org.mule.module.extensions.internal.util.IntrospectionUtils.isDynamic;
 import static org.mule.module.extensions.internal.util.IntrospectionUtils.isIgnored;
 import static org.mule.module.extensions.internal.util.IntrospectionUtils.isRequired;
+import static org.mule.module.extensions.internal.util.NameUtils.getGlobalPojoTypeName;
 import org.mule.extensions.introspection.Configuration;
 import org.mule.extensions.introspection.DataQualifier;
 import org.mule.extensions.introspection.DataType;
@@ -444,7 +445,7 @@ public class SchemaBuilder
     private void registerPojoGlobalElement(DataType type, String description)
     {
         TopLevelElement objectElement = new TopLevelElement();
-        objectElement.setName(NameUtils.hyphenize(type.getRawType().getSimpleName()));
+        objectElement.setName(getGlobalPojoTypeName(type));
 
         LocalComplexType complexContent = newLocalComplexTypeWithBase(type, description);
         complexContent.getComplexContent().getExtension().getAttributeOrAttributeGroup().add(createNameAttribute());

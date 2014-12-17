@@ -6,6 +6,8 @@
  */
 package org.mule.module.extensions.internal.util;
 
+import org.mule.extensions.introspection.DataType;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -130,6 +132,11 @@ public class NameUtils
 
     public static String hyphenize(String camelCaseName)
     {
+        if (StringUtils.isBlank(camelCaseName))
+        {
+            return camelCaseName;
+        }
+
         String result = "";
         String[] parts = camelCaseName.split("(?<!^)(?=[A-Z])");
 
@@ -199,14 +206,23 @@ public class NameUtils
      */
     public static boolean isUncountable(String word)
     {
-        for (String w : uncountable)
+        if (StringUtils.isBlank(word))
         {
-            if (w.equalsIgnoreCase(word))
+            for (String w : uncountable)
             {
-                return true;
+                if (w.equalsIgnoreCase(word))
+                {
+                    return true;
+                }
             }
         }
+
         return false;
+    }
+
+    public static String getGlobalPojoTypeName(DataType type)
+    {
+        return hyphenize(type.getRawType().getSimpleName());
     }
 
     private static class Inflection

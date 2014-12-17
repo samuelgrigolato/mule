@@ -108,39 +108,18 @@
         <util:set id="ricinPacks">
             <spring:ref bean="ricin"/>
         </util:set>
-
-        <spring:bean id="door" class="org.mule.module.extensions.Door">
-            <spring:property name="address" value="pollos hermanos"/>
-            <spring:property name="victim" value="Gustavo Fring"/>
-            <spring:property name="previous">
-                <spring:bean class="org.mule.module.extensions.Door">
-                    <spring:property name="address" value="Jesse's"/>
-                    <spring:property name="victim" value="Krazy-8"/>
-                </spring:bean>
-            </spring:property>
-        </spring:bean>
-
-        <spring:bean id="ricin" class="org.mule.module.extensions.Ricin">
-            <spring:property name="microgramsPerKilo" value="22"/>
-            <spring:property name="destination">
-                <spring:bean class="org.mule.module.extensions.Door">
-                    <spring:property name="address" value="Stevia coffe shop"/>
-                    <spring:property name="victim" value="Lidia"/>
-                </spring:bean>
-            </spring:property>
-        </spring:bean>
-
-        <spring:bean id="skylerDoor" class="org.mule.module.extensions.Door">
-            <spring:property name="victim" value="Skyler"/>
-            <spring:property name="address" value="308 Negra Arroyo Lane"/>
-        </spring:bean>
-
-        <spring:bean id="saulDoor" class="org.mule.module.extensions.Door">
-            <spring:property name="victim" value="Saul"/>
-            <spring:property name="address" value="Shopping Mall"/>
-        </spring:bean>
-
-    </spring:beans>
-
+        </spring:beans>
+    
+    <heisenberg:door victim="Gustavo Fring" address="pollos hermanos" name="door">
+        <heisenberg:previous victim="Krazy-8" address="Jesse's" />
+    </heisenberg:door>
+    
+    <heisenberg:ricin microgramsPerKilo="22" name="ricin">
+        <heisenberg:destination victim="Lidia" address="Stevia coffe shop" />
+    </heisenberg:ricin>
+    
+    <heisenberg:door victim="Skyler" address="308 Negra Arroyo Lane" name="skylerDoor" />
+    
+    <heisenberg:door victim="Saul" address="Shopping Mall" name="saulDoor" />
 
 </mule>
