@@ -43,6 +43,7 @@ public class ModuleDefinitionParserTestCase extends ExtensionsFunctionalTestCase
 {
 
     private static final String HEISENBERG_BYNAME = "heisenberg";
+    private static final String HEISENBERG_PLACEHOLDERS = "heisenbergWithPlaceHolders";
     private static final String HEISENBERG_BYREF = "heisenbergByRef";
     private static final String HEISENBERG_EXPRESSION = "expressionHeisenberg";
     private static final String HEISENBERG_EXPRESSION_BYREF = "expressionHeisenbergByRef";
@@ -74,7 +75,7 @@ public class ModuleDefinitionParserTestCase extends ExtensionsFunctionalTestCase
     public static Collection<Object[]> data()
     {
         return Arrays.asList(new Object[][] {
-                {HEISENBERG_BYNAME}, {HEISENBERG_BYREF}, {HEISENBERG_EXPRESSION}, {HEISENBERG_EXPRESSION_BYREF}
+                {HEISENBERG_BYNAME}, {HEISENBERG_PLACEHOLDERS}, {HEISENBERG_BYREF}, {HEISENBERG_EXPRESSION}, {HEISENBERG_EXPRESSION_BYREF}
         });
     }
 
