@@ -33,16 +33,13 @@ import org.mule.module.extensions.internal.capability.xml.schema.model.Import;
 import org.mule.module.extensions.internal.capability.xml.schema.model.LocalComplexType;
 import org.mule.module.extensions.internal.capability.xml.schema.model.LocalSimpleType;
 import org.mule.module.extensions.internal.capability.xml.schema.model.NoFixedFacet;
-import org.mule.module.extensions.internal.capability.xml.schema.model.NumFacet;
 import org.mule.module.extensions.internal.capability.xml.schema.model.ObjectFactory;
-import org.mule.module.extensions.internal.capability.xml.schema.model.Pattern;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Restriction;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Schema;
 import org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants;
 import org.mule.module.extensions.internal.capability.xml.schema.model.SchemaTypeConversion;
 import org.mule.module.extensions.internal.capability.xml.schema.model.SimpleContent;
 import org.mule.module.extensions.internal.capability.xml.schema.model.SimpleExtensionType;
-import org.mule.module.extensions.internal.capability.xml.schema.model.SimpleType;
 import org.mule.module.extensions.internal.capability.xml.schema.model.TopLevelComplexType;
 import org.mule.module.extensions.internal.capability.xml.schema.model.TopLevelElement;
 import org.mule.module.extensions.internal.capability.xml.schema.model.TopLevelSimpleType;
@@ -129,79 +126,6 @@ public class SchemaBuilder
         muleSchemaImport.setSchemaLocation(SchemaConstants.MULE_SCHEMA_LOCATION);
         schema.getIncludeOrImportOrRedefine().add(muleSchemaImport);
         return this;
-    }
-
-    public Schema registerSimpleTypes()
-    {
-        registerType(schema, "integerType", SchemaConstants.INTEGER);
-        registerType(schema, "longType", SchemaConstants.LONG);
-        registerType(schema, "booleanType", SchemaConstants.BOOLEAN);
-        registerType(schema, "decimalType", SchemaConstants.DECIMAL);
-        registerType(schema, "floatType", SchemaConstants.FLOAT);
-        registerType(schema, "doubleType", SchemaConstants.DOUBLE);
-        registerType(schema, "dateTimeType", SchemaConstants.DATETIME);
-        registerType(schema, "byteType", SchemaConstants.BYTE);
-        registerType(schema, "anyUriType", SchemaConstants.ANYURI);
-        registerType(schema, "charType", SchemaConstants.STRING, 1, 1);
-
-        return schema;
-    }
-
-    private void registerType(Schema schema, String name, QName base)
-    {
-        registerType(schema, name, base, -1, -1);
-    }
-
-    private void registerType(Schema schema, String name, QName base, int minlen, int maxlen)
-    {
-        registerType(schema, name, base, minlen, maxlen, SchemaConstants.DEFAULT_PATTERN);
-    }
-
-    private void registerType(Schema schema, String name, QName base, int minlen, int maxlen, String pattern)
-    {
-        SimpleType simpleType = new TopLevelSimpleType();
-        simpleType.setName(name);
-        Union union = new Union();
-        simpleType.setUnion(union);
-
-        union.getSimpleType().add(createSimpleType(base, minlen, maxlen, pattern));
-        union.getSimpleType().add(createExpressionAndPropertyPlaceHolderSimpleType());
-
-        schema.getSimpleTypeOrComplexTypeOrGroup().add(simpleType);
-    }
-
-    private LocalSimpleType createSimpleType(QName base, int minlen, int maxlen, String pattern)
-    {
-        LocalSimpleType simpleType = new LocalSimpleType();
-        Restriction restriction = new Restriction();
-        restriction.setBase(base);
-
-        if (minlen != -1)
-        {
-            NumFacet minLenFacet = new NumFacet();
-            minLenFacet.setValue(Integer.toString(minlen));
-            JAXBElement<NumFacet> element = objectFactory.createMinLength(minLenFacet);
-            restriction.getFacets().add(element);
-        }
-
-        if (maxlen != -1)
-        {
-            NumFacet maxLenFacet = new NumFacet();
-            maxLenFacet.setValue(Integer.toString(maxlen));
-            JAXBElement<NumFacet> element = objectFactory.createMaxLength(maxLenFacet);
-            restriction.getFacets().add(element);
-        }
-
-        if (!SchemaConstants.DEFAULT_PATTERN.equals(pattern))
-        {
-            Pattern xmlPattern = objectFactory.createPattern();
-            xmlPattern.setValue(pattern);
-            restriction.getFacets().add(xmlPattern);
-        }
-
-        simpleType.setRestriction(restriction);
-
-        return simpleType;
     }
 
     public SchemaBuilder registerConfigElement(final Configuration configuration)
@@ -523,19 +447,7 @@ public class SchemaBuilder
             protected void defaultOperation()
             {
                 attribute.setName(name);
-
-                if (dynamic)
-                {
-                    attribute.setType(SchemaConstants.EXPRESSION);
-                }
-                else if (isTypeSupported(type))
-                {
-                    attribute.setType(SchemaTypeConversion.convertType(schema.getTargetNamespace(), type.getName()));
-                }
-                else
-                {
-                    attribute.setType(SchemaConstants.STRING);
-                }
+                attribute.setType(SchemaTypeConversion.convertType(type, dynamic));
             }
         });
 
@@ -584,15 +496,6 @@ public class SchemaBuilder
             @Override
             public void onPojo()
             {
-                //registerPojoType(genericType, description);
-                //ComplexType complexType = registeredComplexTypesHolders.get(genericType).getComplexType();
-                //LocalComplexType localComplexType = newLocalComplexTypeWithBase(genericType, EMPTY);
-                //
-                //localComplexType.setComplexContent(complexType.getComplexContent());
-                //localComplexType.setAll(complexType.getAll());
-                //localComplexType.setSequence(complexType.getSequence());
-                //localComplexType.getAttributeOrAttributeGroup().addAll(complexType.getAttributeOrAttributeGroup());
-
                 collectionItemElement.setComplexType(newLocalComplexTypeWithBase(genericType, description));
             }
 
@@ -614,7 +517,7 @@ public class SchemaBuilder
         SimpleContent simpleContent = new SimpleContent();
         complexType.setSimpleContent(simpleContent);
         SimpleExtensionType simpleContentExtension = new SimpleExtensionType();
-        QName extensionBase = SchemaTypeConversion.convertType(schema.getTargetNamespace(), type.getName());
+        QName extensionBase = SchemaTypeConversion.convertType(type, false);
         simpleContentExtension.setBase(extensionBase);
         simpleContent.setExtension(simpleContentExtension);
 
@@ -650,7 +553,7 @@ public class SchemaBuilder
         complexContentExtension.setBase(base);
         complexContent.setExtension(complexContentExtension);
 
-        Attribute configAttr = createAttribute(SchemaConstants.ATTRIBUTE_NAME_CONFIG, SchemaConstants.ATTRIBUTE_DESCRIPTION_CONFIG, false, SchemaConstants.EXPRESSION);
+        Attribute configAttr = createAttribute(SchemaConstants.ATTRIBUTE_NAME_CONFIG, SchemaConstants.ATTRIBUTE_DESCRIPTION_CONFIG, false, SchemaConstants.SUBSTITUTABLE_NAME);
         complexContentExtension.getAttributeOrAttributeGroup().add(configAttr);
 
         final ExplicitGroup all = new ExplicitGroup();
@@ -790,11 +693,6 @@ public class SchemaBuilder
         doc.getContent().add(content);
         annotation.getAppinfoOrDocumentation().add(doc);
         return annotation;
-    }
-
-    private boolean isTypeSupported(DataType type)
-    {
-        return SchemaTypeConversion.isSupported(type);
     }
 
     private class ComplexTypeHolder

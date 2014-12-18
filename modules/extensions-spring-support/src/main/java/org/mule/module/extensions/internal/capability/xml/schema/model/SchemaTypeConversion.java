@@ -7,118 +7,97 @@
 
 package org.mule.module.extensions.internal.capability.xml.schema.model;
 
+import static org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants.EXPRESSION_BOOLEAN;
+import static org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants.EXPRESSION_DATE_TIME;
+import static org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants.EXPRESSION_DECIMAL;
+import static org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants.EXPRESSION_DOUBLE;
+import static org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants.EXPRESSION_INTEGER;
+import static org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants.EXPRESSION_LIST;
+import static org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants.EXPRESSION_LONG;
+import static org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants.EXPRESSION_MAP;
+import static org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants.EXPRESSION_OBJECT;
+import static org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants.EXPRESSION_STRING;
+import static org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants.STRING;
+import static org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants.SUBSTITUTABLE_BOOLEAN;
+import static org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants.SUBSTITUTABLE_DATE_TIME;
+import static org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants.SUBSTITUTABLE_DECIMAL;
+import static org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants.SUBSTITUTABLE_INT;
+import static org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants.SUBSTITUTABLE_LONG;
+import static org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants.SUBSTITUTABLE_NAME;
 import org.mule.extensions.introspection.DataType;
+import org.mule.module.extensions.internal.introspection.BaseDataQualifierVisitor;
+import org.mule.util.ValueHolder;
 
 import javax.xml.namespace.QName;
 
 public final class SchemaTypeConversion
 {
 
-    public static boolean isSupported(DataType type)
-    {
-        return convertType("", type.getRawType().getName()) != null;
-    }
+    public static QName convertType(final DataType type, final boolean dynamic) {
+        final ValueHolder<QName> qName = new ValueHolder<>();
+        type.getQualifier().accept(new BaseDataQualifierVisitor()
+        {
+            @Override
+            public void onBoolean()
+            {
+                qName.set(dynamic ? EXPRESSION_BOOLEAN : SUBSTITUTABLE_BOOLEAN);
+            }
 
-    public static QName convertType(String targetNamespace, String typeName)
-    {
-        if (typeName.equals("java.lang.String"))
-        {
-            return new QName(SchemaConstants.XSD_NAMESPACE, "string", "xs");
-        }
-        else if (typeName.equals("int"))
-        {
-            return new QName(targetNamespace, "integerType");
-        }
-        else if (typeName.equals("float"))
-        {
-            return new QName(targetNamespace, "floatType");
-        }
-        else if (typeName.equals("long"))
-        {
-            return new QName(targetNamespace, "longType");
-        }
-        else if (typeName.equals("byte"))
-        {
-            return new QName(targetNamespace, "byteType");
-        }
-        else if (typeName.equals("short"))
-        {
-            return new QName(targetNamespace, "integerType");
-        }
-        else if (typeName.equals("double"))
-        {
-            return new QName(targetNamespace, "doubleType");
-        }
-        else if (typeName.equals("boolean"))
-        {
-            return new QName(targetNamespace, "booleanType");
-        }
-        else if (typeName.equals("char"))
-        {
-            return new QName(targetNamespace, "charType");
-        }
-        else if (typeName.equals("java.lang.Integer"))
-        {
-            return new QName(targetNamespace, "integerType");
-        }
-        else if (typeName.equals("java.lang.Float"))
-        {
-            return new QName(targetNamespace, "floatType");
-        }
-        else if (typeName.equals("java.lang.Long"))
-        {
-            return new QName(targetNamespace, "longType");
-        }
-        else if (typeName.equals("java.lang.Byte"))
-        {
-            return new QName(targetNamespace, "byteType");
-        }
-        else if (typeName.equals("java.lang.Short"))
-        {
-            return new QName(targetNamespace, "integerType");
-        }
-        else if (typeName.equals("java.lang.Double"))
-        {
-            return new QName(targetNamespace, "doubleType");
-        }
-        else if (typeName.equals("java.lang.Boolean"))
-        {
-            return new QName(targetNamespace, "booleanType");
-        }
-        else if (typeName.equals("java.lang.Character"))
-        {
-            return new QName(targetNamespace, "charType");
-        }
-        else if (typeName.equals("java.math.BigDecimal"))
-        {
-            return new QName(targetNamespace, "doubleType");
-        }
-        else if (typeName.equals("java.math.BigInteger"))
-        {
-            return new QName(targetNamespace, "integerType");
-        }
-        else if (typeName.equals("java.util.Date"))
-        {
-            return new QName(targetNamespace, "dateTimeType");
-        }
-        else if (typeName.equals("java.util.Calendar"))
-        {
-            return new QName(targetNamespace, "dateTimeType");
-        }
-        else if (typeName.equals("java.lang.Class") ||
-                 typeName.startsWith("java.lang.Class<"))
-        {
-            return new QName(SchemaConstants.XSD_NAMESPACE, "string", "xs");
-        }
-        else if (typeName.equals("java.net.URL"))
-        {
-            return new QName(targetNamespace, "anyUriType");
-        }
-        else if (typeName.equals("java.net.URI"))
-        {
-            return new QName(targetNamespace, "anyUriType");
-        }
+            @Override
+            public void onInteger()
+            {
+                qName.set(dynamic ? EXPRESSION_INTEGER : SUBSTITUTABLE_INT);
+            }
 
-        return null;
+            @Override
+            public void onDouble()
+            {
+                qName.set(dynamic ? EXPRESSION_DOUBLE : SUBSTITUTABLE_DECIMAL);
+            }
+
+            @Override
+            public void onDecimal()
+            {
+                qName.set(dynamic ? EXPRESSION_DECIMAL : SUBSTITUTABLE_DECIMAL);
+            }
+
+            @Override
+            public void onString()
+            {
+                qName.set(dynamic ? EXPRESSION_STRING : STRING);
+            }
+
+            @Override
+            public void onLong()
+            {
+                qName.set(dynamic ? EXPRESSION_LONG : SUBSTITUTABLE_LONG);
+            }
+
+            @Override
+            public void onDateTime()
+            {
+                qName.set(dynamic ? EXPRESSION_DATE_TIME : SUBSTITUTABLE_DATE_TIME);
+            }
+
+            @Override
+            public void onList()
+            {
+                qName.set(dynamic ? EXPRESSION_LIST : SUBSTITUTABLE_NAME);
+            }
+
+            @Override
+            public void onMap()
+            {
+                qName.set(dynamic ? EXPRESSION_MAP : SUBSTITUTABLE_NAME);
+            }
+
+            @Override
+            protected void defaultOperation()
+            {
+                qName.set(dynamic ? EXPRESSION_OBJECT : STRING);
+            }
+        });
+
+        return qName.get();
     }
 }

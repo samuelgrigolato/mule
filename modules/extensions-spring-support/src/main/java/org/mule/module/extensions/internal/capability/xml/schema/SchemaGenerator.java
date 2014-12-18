@@ -59,7 +59,6 @@ public class SchemaGenerator
         }
 
         schemaBuilder.registerEnums();
-        schemaBuilder.registerSimpleTypes();
 
         return renderSchema(schemaBuilder.getSchema());
     }

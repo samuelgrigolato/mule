@@ -24,24 +24,31 @@ public final class SchemaConstants
     public static final QName MULE_ABSTRACT_MESSAGE_PROCESSOR = new QName(MULE_NAMESPACE, "abstract-message-processor", "mule");
     public static final QName MULE_ABSTRACT_MESSAGE_PROCESSOR_TYPE = new QName(MULE_NAMESPACE, "abstractMessageProcessorType", "mule");
     public static final QName MULE_MESSAGE_PROCESSOR_OR_OUTBOUND_ENDPOINT_TYPE = new QName(MULE_NAMESPACE, "messageProcessorOrOutboundEndpoint", "mule");
-    public static final String SUBSTITUTABLE_INT = "substitutableInt";
-    public static final String SUBSTITUTABLE_LONG = "substitutableLong";
-    public static final String SUBSTITUTABLE_BOOLEAN = "substitutableBoolean";
+
+    //TYPES
+    public static final QName SUBSTITUTABLE_INT = new QName(MULE_NAMESPACE, "substitutableInt", "mule");
+    public static final QName SUBSTITUTABLE_LONG = new QName(MULE_NAMESPACE, "substitutableLong", "mule");
+    public static final QName SUBSTITUTABLE_BOOLEAN = new QName(MULE_NAMESPACE, "substitutableBoolean", "mule");
+    public static final QName SUBSTITUTABLE_DECIMAL = new QName(MULE_NAMESPACE, "substitutableDecimal", "mule");
+    public static final QName SUBSTITUTABLE_DATE_TIME = new QName(MULE_NAMESPACE, "substitutableDateTime", "mule");
+    public static final QName SUBSTITUTABLE_NAME = new QName(MULE_NAMESPACE, "substitutableName", "mule");
     public static final QName STRING = new QName(XSD_NAMESPACE, "string", "xs");
-    public static final QName DECIMAL = new QName(XSD_NAMESPACE, "decimal", "xs");
-    public static final QName FLOAT = new QName(XSD_NAMESPACE, "float", "xs");
-    public static final QName INTEGER = new QName(MULE_NAMESPACE, SUBSTITUTABLE_INT, "mule");
-    public static final QName DOUBLE = new QName(XSD_NAMESPACE, "double", "xs");
-    public static final QName DATETIME = new QName(XSD_NAMESPACE, "dateTime", "xs");
-    public static final QName LONG = new QName(MULE_NAMESPACE, SUBSTITUTABLE_LONG, "mule");
-    public static final QName BYTE = new QName(XSD_NAMESPACE, "byte", "xs");
-    public static final QName BOOLEAN = new QName(MULE_NAMESPACE, SUBSTITUTABLE_BOOLEAN, "mule");
-    public static final QName ANYURI = new QName(XSD_NAMESPACE, "anyURI", "xs");
-    public static final QName EXPRESSION = new QName(MULE_NAMESPACE, "expression", "mule");
+    public static final QName EXPRESSION_STRING = new QName(MULE_NAMESPACE, "expressionString", "mule");
+    public static final QName EXPRESSION_LONG = new QName(MULE_NAMESPACE, "expressionInt", "mule");
+    public static final QName EXPRESSION_BOOLEAN = new QName(MULE_NAMESPACE, "expressionBoolean", "mule");
+    public static final QName EXPRESSION_INTEGER = new QName(MULE_NAMESPACE, "expressionLong", "mule");
+    public static final QName EXPRESSION_DOUBLE = new QName(MULE_NAMESPACE, "expressionDouble", "mule");
+    public static final QName EXPRESSION_DECIMAL = new QName(MULE_NAMESPACE, "expressionDecimal", "mule");
+    public static final QName EXPRESSION_OBJECT = new QName(MULE_NAMESPACE, "expressionObject", "mule");
+    public static final QName EXPRESSION_LIST = new QName(MULE_NAMESPACE, "expressionList", "mule");
+    public static final QName EXPRESSION_MAP = new QName(MULE_NAMESPACE, "expressionMap", "mule");
+    public static final QName EXPRESSION_DATE_TIME = new QName(MULE_NAMESPACE, "expressionMap", "mule");
+
+    // ATTRIBUTES
     public static final String USE_REQUIRED = "required";
     public static final String USE_OPTIONAL = "optional";
     public static final String INNER_PREFIX = "inner-";
-    public static final String ATTRIBUTE_NAME_CONFIG = "config";
+    public static final String ATTRIBUTE_NAME_CONFIG = "config-ref";
     public static final String ATTRIBUTE_DESCRIPTION_CONFIG = "Specify which configuration to use for this invocation.";
     public static final String ATTRIBUTE_NAME_VALUE = "value";
     public static final String ENUM_TYPE_SUFFIX = "EnumType";
