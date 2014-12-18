@@ -21,7 +21,6 @@ import org.mule.extensions.introspection.DataQualifierVisitor;
  * <li>{@link #onDecimal()}</li>
  * <li>{@link #onString()}</li>
  * <li>{@link #onLong()}</li>
- * <li>{@link #onByte()}</li>
  * <li>{@link #onEnum()}</li>
  * </ul>
  * <p/>
@@ -67,12 +66,6 @@ public abstract class SimpleTypeDataQualifierVisitor extends BaseDataQualifierVi
 
     @Override
     public void onLong()
-    {
-        onSimpleType();
-    }
-
-    @Override
-    public void onByte()
     {
         onSimpleType();
     }

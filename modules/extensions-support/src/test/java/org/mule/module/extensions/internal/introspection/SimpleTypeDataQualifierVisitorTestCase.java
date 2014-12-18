@@ -35,7 +35,6 @@ public class SimpleTypeDataQualifierVisitorTestCase extends AbstractMuleTestCase
             DataQualifier.DECIMAL,
             DataQualifier.STRING,
             DataQualifier.LONG,
-            DataQualifier.BYTE,
             DataQualifier.ENUM};
 
     @Parameters(name = "isSimpleType({0})")

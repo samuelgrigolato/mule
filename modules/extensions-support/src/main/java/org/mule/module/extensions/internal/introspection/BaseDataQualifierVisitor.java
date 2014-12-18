@@ -58,12 +58,6 @@ public class BaseDataQualifierVisitor implements DataQualifierVisitor
     }
 
     @Override
-    public void onByte()
-    {
-        defaultOperation();
-    }
-
-    @Override
     public void onEnum()
     {
         defaultOperation();
