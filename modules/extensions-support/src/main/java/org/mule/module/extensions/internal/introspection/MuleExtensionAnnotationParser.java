@@ -6,11 +6,14 @@
  */
 package org.mule.module.extensions.internal.introspection;
 
+import static org.mule.util.Preconditions.checkArgument;
 import static org.mule.util.Preconditions.checkState;
 import static org.reflections.ReflectionUtils.getAllFields;
 import static org.reflections.ReflectionUtils.getAllMethods;
 import static org.reflections.ReflectionUtils.withAnnotation;
 import static org.reflections.ReflectionUtils.withModifier;
+import static org.reflections.ReflectionUtils.withName;
+import static org.reflections.ReflectionUtils.withParameters;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleMessage;
 import org.mule.api.NestedProcessor;
@@ -21,6 +24,7 @@ import org.mule.extensions.annotations.param.Payload;
 import org.mule.extensions.introspection.DataQualifier;
 import org.mule.extensions.introspection.DataType;
 import org.mule.extensions.introspection.Operation;
+import org.mule.extensions.introspection.Parameter;
 import org.mule.module.extensions.internal.util.IntrospectionUtils;
 import org.mule.util.ParamReader;
 
@@ -43,7 +47,7 @@ import java.util.Set;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 
-final class MuleExtensionAnnotationParser
+public final class MuleExtensionAnnotationParser
 {
 
     private static final Set<Class<?>> notParametrizableTypes = ImmutableSet.<Class<?>>builder()
@@ -65,12 +69,41 @@ final class MuleExtensionAnnotationParser
         return getAllFields(extensionType, withAnnotation(Configurable.class));
     }
 
-    static Collection<Method> getOperationMethods(Class<?> extensionType)
+    static Collection<Method> getOperationMethods(Class<?> declaringClass)
     {
-        return getAllMethods(extensionType, withAnnotation(org.mule.extensions.annotations.Operation.class), withModifier(Modifier.PUBLIC));
+        return getAllMethods(declaringClass, withAnnotation(org.mule.extensions.annotations.Operation.class), withModifier(Modifier.PUBLIC));
     }
 
-    public static List<ParameterDescriptor> parseParameter(Method method)
+    public static Method getOperationMethod(Class<?> declaringClass, Operation operation)
+    {
+        Class<?>[] parameterTypes;
+        if (operation.getParameters().isEmpty())
+        {
+            parameterTypes = ArrayUtils.EMPTY_CLASS_ARRAY;
+        }
+        else
+        {
+            parameterTypes = new Class<?>[operation.getParameters().size()];
+            int i = 0;
+            for (Parameter parameter : operation.getParameters())
+            {
+                parameterTypes[i++] = parameter.getType().getRawType();
+            }
+        }
+
+        Collection<Method> methods = getAllMethods(declaringClass,
+                                                   withAnnotation(org.mule.extensions.annotations.Operation.class),
+                                                   withModifier(Modifier.PUBLIC),
+                                                   withName(operation.getName()),
+                                                   withParameters(parameterTypes));
+
+        checkArgument(!methods.isEmpty(), String.format("Could not find method %s in class %s", operation.getName(), declaringClass.getName()));
+        checkArgument(methods.size() == 1, String.format("More than one matching method was found in class %s for operation %s", declaringClass.getName(), operation.getName()));
+
+        return methods.iterator().next();
+    }
+
+    static List<ParameterDescriptor> parseParameter(Method method)
     {
         String[] paramNames = getParamNames(method);
 

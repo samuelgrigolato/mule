@@ -146,7 +146,7 @@ public final class MuleExtensionUtils
         }
     }
 
-    public static boolean hasAnyDynamic(Iterable<ValueResolver> resolvers)
+    public static <T> boolean hasAnyDynamic(Iterable<ValueResolver<T>> resolvers)
     {
         for (ValueResolver resolver : resolvers)
         {
@@ -193,6 +193,11 @@ public final class MuleExtensionUtils
 
     public static <T extends Described> List<T> alphaSortDescribedList(List<T> list)
     {
+        if (CollectionUtils.isEmpty(list))
+        {
+            return list;
+        }
+
         Collections.sort(list, new DescribedComparator());
         return list;
     }

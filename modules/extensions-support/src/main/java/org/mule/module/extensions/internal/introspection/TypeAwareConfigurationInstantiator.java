@@ -16,6 +16,8 @@ import org.mule.extensions.introspection.ConfigurationInstantiator;
  * Implementation of {@link ConfigurationInstantiator} which creates instantes
  * based on a given {@link Class} which is asumed to have a default and public
  * constructor.
+ *
+ * @since 3.7.0
  */
 final class TypeAwareConfigurationInstantiator implements ConfigurationInstantiator
 {

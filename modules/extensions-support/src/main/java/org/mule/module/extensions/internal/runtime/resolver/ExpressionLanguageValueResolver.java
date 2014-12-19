@@ -8,6 +8,7 @@ package org.mule.module.extensions.internal.runtime.resolver;
 
 import static org.mule.util.Preconditions.checkArgument;
 import org.mule.api.MuleEvent;
+import org.mule.api.MuleException;
 import org.mule.api.el.ExpressionLanguage;
 
 import org.apache.commons.lang.StringUtils;
@@ -28,7 +29,7 @@ public class ExpressionLanguageValueResolver extends AbstractDynamicValueResolve
     }
 
     @Override
-    public Object resolve(MuleEvent event) throws Exception
+    public Object resolve(MuleEvent event) throws MuleException
     {
         return expressionLanguage.evaluate(expression, event);
     }

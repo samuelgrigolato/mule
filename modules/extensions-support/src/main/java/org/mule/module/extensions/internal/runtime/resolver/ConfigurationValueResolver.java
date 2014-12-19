@@ -73,10 +73,10 @@ public final class ConfigurationValueResolver implements ValueResolver, MuleCont
      *
      * @param event a {@link MuleEvent}
      * @return a configuration instance
-     * @throws Exception
+     * @throws {@link MuleException}
      */
     @Override
-    public Object resolve(MuleEvent event) throws Exception
+    public Object resolve(MuleEvent event) throws MuleException
     {
         return resolver.resolve(event);
     }

@@ -7,6 +7,7 @@
 package org.mule.module.extensions.internal.runtime;
 
 import org.mule.api.MuleEvent;
+import org.mule.api.MuleException;
 import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
 
 import java.lang.reflect.Method;
@@ -70,7 +71,7 @@ public interface ObjectBuilder
      *
      * @param event a {@link MuleEvent}
      * @return a new instance
-     * @throws Exception
+     * @throws {@link MuleException}
      */
-    Object build(MuleEvent event) throws Exception;
+    Object build(MuleEvent event) throws MuleException;
 }

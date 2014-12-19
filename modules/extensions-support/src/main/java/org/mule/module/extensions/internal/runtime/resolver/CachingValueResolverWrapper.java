@@ -54,7 +54,7 @@ public class CachingValueResolverWrapper extends BaseValueResolverWrapper
      * @throws Exception
      */
     @Override
-    public Object resolve(MuleEvent event) throws Exception
+    public Object resolve(MuleEvent event) throws MuleException
     {
         return cacheDelegate.get(event);
     }
@@ -98,14 +98,14 @@ public class CachingValueResolverWrapper extends BaseValueResolverWrapper
     private interface CachingDelegate
     {
 
-        Object get(MuleEvent event) throws Exception;
+        Object get(MuleEvent event) throws MuleException;
     }
 
     private class FirstTimeCachingDelegate implements CachingDelegate
     {
 
         @Override
-        public synchronized Object get(MuleEvent event) throws Exception
+        public synchronized Object get(MuleEvent event) throws MuleException
         {
             if (value == null)
             {
@@ -121,7 +121,7 @@ public class CachingValueResolverWrapper extends BaseValueResolverWrapper
     {
 
         @Override
-        public Object get(MuleEvent event) throws Exception
+        public Object get(MuleEvent event) throws MuleException
         {
             return value;
         }

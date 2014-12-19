@@ -111,7 +111,7 @@ public class CachedConfigurationValueResolver implements ValueResolver, Stoppabl
      * @return the resolved value
      */
     @Override
-    public Object resolve(MuleEvent event) throws Exception
+    public Object resolve(MuleEvent event) throws MuleException
     {
         ResolverSetResult result = resolverSet.resolve(event);
         return cache.getUnchecked(result);

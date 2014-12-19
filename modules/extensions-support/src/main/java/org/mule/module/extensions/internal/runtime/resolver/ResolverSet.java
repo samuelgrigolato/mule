@@ -106,7 +106,7 @@ public class ResolverSet implements ValueResolver, Lifecycle, MuleContextAware
      * @throws Exception
      */
     @Override
-    public ResolverSetResult resolve(MuleEvent event) throws Exception
+    public ResolverSetResult resolve(MuleEvent event) throws MuleException
     {
         ResolverSetResult.Builder builder = ResolverSetResult.newBuilder();
         for (Map.Entry<Parameter, ValueResolver> entry : resolvers.entrySet())

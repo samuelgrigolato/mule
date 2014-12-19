@@ -9,6 +9,7 @@ package org.mule.module.extensions.internal.runtime.resolver;
 import static org.mule.util.Preconditions.checkArgument;
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
+import org.mule.api.MuleException;
 import org.mule.api.lifecycle.LifecycleUtils;
 import org.mule.api.lifecycle.Startable;
 
@@ -53,7 +54,7 @@ public class InitialLifecycleValueResolver extends BaseValueResolverWrapper
      * @throws Exception
      */
     @Override
-    public Object resolve(MuleEvent event) throws Exception
+    public Object resolve(MuleEvent event) throws MuleException
     {
         Object resolved = delegate.resolve(event);
 

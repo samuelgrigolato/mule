@@ -23,7 +23,6 @@ import org.mule.extensions.introspection.declaration.OperationDeclaration;
 import org.mule.extensions.introspection.declaration.ParameterDeclaration;
 import org.mule.extensions.introspection.spi.DescriberPostProcessor;
 import org.mule.module.extensions.internal.ImmutableDescribingContext;
-import org.mule.module.extensions.internal.util.MuleExtensionUtils;
 
 import com.google.common.collect.ImmutableList;
 
@@ -101,7 +100,7 @@ public final class DefaultExtensionFactory implements ExtensionFactory
         return new ImmutableConfiguration(declaration.getName(),
                                           declaration.getDescription(),
                                           declaration.getConfigurationInstantiator(),
-                                          toParameters(declaration.getParameters()),
+                                          toConfigParameters(declaration.getParameters()),
                                           declaration.getCapabilities());
     }
 
@@ -123,10 +122,26 @@ public final class DefaultExtensionFactory implements ExtensionFactory
 
     private Operation toOperation(OperationDeclaration declaration)
     {
+        List<Parameter> parameters = toOperationParameters(declaration.getParameters(), declaration);
         return new ImmutableOperation(declaration.getName(),
                                       declaration.getDescription(),
                                       declaration.getImplementation(),
-                                      toParameters(declaration.getParameters()));
+                                      parameters,
+                                      declaration.getCapabilities());
+    }
+
+    private List<Parameter> toConfigParameters(List<ParameterDeclaration> declarations)
+    {
+
+        List<Parameter> parameters = toParameters(declarations);
+        alphaSortDescribedList(parameters);
+
+        return parameters;
+    }
+
+    private List<Parameter> toOperationParameters(List<ParameterDeclaration> declarations, OperationDeclaration declaration)
+    {
+        return toParameters(declarations);
     }
 
     private List<Parameter> toParameters(List<ParameterDeclaration> declarations)
@@ -142,13 +157,11 @@ public final class DefaultExtensionFactory implements ExtensionFactory
             parameters.add(toParameter(declaration));
         }
 
-        MuleExtensionUtils.alphaSortDescribedList(parameters);
         return parameters;
     }
 
     private Parameter toParameter(ParameterDeclaration parameter)
     {
-
         return new ImmutableParameter(parameter.getName(),
                                       parameter.getDescription(),
                                       parameter.getType(),

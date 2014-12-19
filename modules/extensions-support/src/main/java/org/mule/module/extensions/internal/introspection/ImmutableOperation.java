@@ -13,13 +13,14 @@ import org.mule.extensions.introspection.OperationImplementation;
 import org.mule.extensions.introspection.Parameter;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Immutable concrete implementation of {@link Operation}
  *
  * @since 3.7.0
  */
-final class ImmutableOperation extends AbstractImmutableDescribed implements Operation
+final class ImmutableOperation extends AbstractImmutableCapableDescribed implements Operation
 {
 
     private final List<Parameter> parameters;
@@ -28,9 +29,10 @@ final class ImmutableOperation extends AbstractImmutableDescribed implements Ope
     ImmutableOperation(String name,
                        String description,
                        OperationImplementation implementation,
-                       List<Parameter> parameters)
+                       List<Parameter> parameters,
+                       Set<Object> capabilities)
     {
-        super(name, description);
+        super(name, description, capabilities);
 
         checkArgument(implementation != null, String.format("Operation %s cannot have a null implementation", name));
         this.implementation = implementation;

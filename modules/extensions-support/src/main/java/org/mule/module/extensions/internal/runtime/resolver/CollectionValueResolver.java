@@ -25,32 +25,32 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class CollectionValueResolver implements ValueResolver, Lifecycle, MuleContextAware
+public abstract class CollectionValueResolver<T> implements ValueResolver<Collection<T>>, Lifecycle, MuleContextAware
 {
 
     private final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
-    private final List<ValueResolver> resolvers;
+    private final List<ValueResolver<T>> resolvers;
     private MuleContext muleContext;
 
-    public static CollectionValueResolver of(Class<? extends Collection> collectionType, List<ValueResolver> resolvers)
+    public static <T> CollectionValueResolver<T> of(Class<? extends Collection> collectionType, List<ValueResolver<T>> resolvers)
     {
         return Set.class.isAssignableFrom(collectionType)
-               ? new SetValueResolver(resolvers)
-               : new ListValueResolver(resolvers);
+               ? new SetValueResolver<T>(resolvers)
+               : new ListValueResolver<T>(resolvers);
     }
 
-    public CollectionValueResolver(List<ValueResolver> resolvers)
+    public CollectionValueResolver(List<ValueResolver<T>> resolvers)
     {
         checkArgument(resolvers != null, "resolvers cannot be null");
         this.resolvers = ImmutableList.copyOf(resolvers);
     }
 
     @Override
-    public Object resolve(MuleEvent event) throws Exception
+    public Collection<T> resolve(MuleEvent event) throws MuleException
     {
-        Collection<Object> collection = instantiateCollection(resolvers.size());
-        for (ValueResolver resolver : resolvers)
+        Collection<T> collection = instantiateCollection(resolvers.size());
+        for (ValueResolver<T> resolver : resolvers)
         {
             collection.add(resolver.resolve(event));
         }
@@ -67,7 +67,7 @@ public abstract class CollectionValueResolver implements ValueResolver, Lifecycl
         return MuleExtensionUtils.hasAnyDynamic(resolvers);
     }
 
-    protected abstract Collection<Object> instantiateCollection(int resolversCount);
+    protected abstract Collection<T> instantiateCollection(int resolversCount);
 
     @Override
     public void initialise() throws InitialisationException

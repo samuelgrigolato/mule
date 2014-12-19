@@ -7,19 +7,18 @@
 package org.mule.module.extensions.internal.runtime.resolver;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
-public class ListValueResolver extends CollectionValueResolver
+public class ListValueResolver<T> extends CollectionValueResolver<T>
 {
 
-    public ListValueResolver(List<ValueResolver> resolvers)
+    public ListValueResolver(List<ValueResolver<T>> resolvers)
     {
         super(resolvers);
     }
 
     @Override
-    protected Collection<Object> instantiateCollection(int resolversCount)
+    protected List<T> instantiateCollection(int resolversCount)
     {
         return new ArrayList<>(resolversCount);
     }

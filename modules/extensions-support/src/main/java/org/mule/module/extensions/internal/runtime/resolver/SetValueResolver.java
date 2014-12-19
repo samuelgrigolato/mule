@@ -6,20 +6,20 @@
  */
 package org.mule.module.extensions.internal.runtime.resolver;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-public class SetValueResolver extends CollectionValueResolver
+public class SetValueResolver<T> extends CollectionValueResolver<T>
 {
 
-    public SetValueResolver(List<ValueResolver> resolvers)
+    public SetValueResolver(List<ValueResolver<T>> resolvers)
     {
         super(resolvers);
     }
 
     @Override
-    protected Collection<Object> instantiateCollection(int resolversCount)
+    protected Set<T> instantiateCollection(int resolversCount)
     {
         return new HashSet<>(resolversCount);
     }

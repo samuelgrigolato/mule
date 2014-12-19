@@ -8,6 +8,7 @@ package org.mule.module.extensions.internal.runtime.resolver;
 
 import static org.mule.util.Preconditions.checkArgument;
 import org.mule.api.MuleEvent;
+import org.mule.api.MuleException;
 import org.mule.api.expression.ExpressionManager;
 
 public class ExpressionTemplateValueResolver extends AbstractDynamicValueResolver
@@ -26,7 +27,7 @@ public class ExpressionTemplateValueResolver extends AbstractDynamicValueResolve
     }
 
     @Override
-    public Object resolve(MuleEvent event) throws Exception
+    public Object resolve(MuleEvent event) throws MuleException
     {
         return expressionManager.parse(expression, event);
     }

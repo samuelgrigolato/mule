@@ -27,6 +27,7 @@ import org.mule.extensions.introspection.declaration.Construct;
 import org.mule.extensions.introspection.declaration.DeclarationConstruct;
 import org.mule.extensions.introspection.declaration.OperationConstruct;
 import org.mule.extensions.introspection.declaration.ParameterConstruct;
+import org.mule.module.extensions.internal.runtime.processor.TypeAwareOperationImplementation;
 import org.mule.module.extensions.internal.util.IntrospectionUtils;
 import org.mule.util.CollectionUtils;
 

@@ -10,6 +10,7 @@ import static org.mule.module.extensions.internal.util.MuleExtensionUtils.isSimp
 import static org.mule.util.Preconditions.checkArgument;
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
+import org.mule.api.MuleException;
 import org.mule.api.context.MuleContextAware;
 import org.mule.api.lifecycle.Initialisable;
 import org.mule.api.lifecycle.InitialisationException;
@@ -43,13 +44,13 @@ public class EvaluateAndTransformValueResolver extends AbstractDynamicValueResol
     }
 
     @Override
-    public Object resolve(MuleEvent event) throws Exception
+    public Object resolve(MuleEvent event) throws MuleException
     {
         Object evaluated = delegate.resolve(event);
         return evaluated != null ? transform(evaluated, event) : null;
     }
 
-    private Object transform(Object object, MuleEvent event) throws Exception
+    private Object transform(Object object, MuleEvent event) throws MuleException
     {
         if (expectedType.getRawType().isInstance(object))
         {

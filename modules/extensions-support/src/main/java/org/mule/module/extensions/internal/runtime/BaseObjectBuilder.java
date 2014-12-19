@@ -86,7 +86,7 @@ abstract class BaseObjectBuilder implements ObjectBuilder, Lifecycle, MuleContex
      * {@inheritDoc}
      */
     @Override
-    public Object build(MuleEvent event) throws Exception
+    public Object build(MuleEvent event) throws MuleException
     {
         Object object = instantiateObject();
 

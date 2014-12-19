@@ -35,7 +35,7 @@ public class ObjectBuilderValueResolver implements ValueResolver, Lifecycle, Mul
     }
 
     @Override
-    public Object resolve(MuleEvent event) throws Exception
+    public Object resolve(MuleEvent event) throws MuleException
     {
         return builder.build(event);
     }
