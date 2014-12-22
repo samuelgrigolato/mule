@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 3.7.0
  */
-public class CachedConfigurationValueResolver implements ValueResolver, Stoppable, Disposable
+public class CachedConfigurationValueResolver implements ValueResolver<Object>, Stoppable, Disposable
 {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CachedConfigurationValueResolver.class);

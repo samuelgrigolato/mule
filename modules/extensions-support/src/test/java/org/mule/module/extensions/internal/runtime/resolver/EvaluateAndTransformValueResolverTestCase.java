@@ -56,7 +56,7 @@ public class EvaluateAndTransformValueResolverTestCase extends AbstractMuleConte
     @Test
     public void constant() throws Exception
     {
-        assertResolved(getResolver("Hello World!", String.class).resolve(getTestEvent(HELLO_WORLD)), HELLO_WORLD, times(1));
+        assertResolved(getResolver("Hello World!", String.class).resolve(getTestEvent(HELLO_WORLD)), HELLO_WORLD, never());
     }
 
     @Test

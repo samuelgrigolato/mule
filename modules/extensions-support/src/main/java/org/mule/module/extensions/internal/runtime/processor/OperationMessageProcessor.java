@@ -8,7 +8,6 @@ package org.mule.module.extensions.internal.runtime.processor;
 
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
-import org.mule.api.MuleMessage;
 import org.mule.api.processor.MessageProcessor;
 import org.mule.extensions.introspection.Operation;
 import org.mule.module.extensions.internal.runtime.resolver.ResolverSet;
@@ -24,6 +23,13 @@ public final class OperationMessageProcessor implements MessageProcessor
     private final Operation operation;
     private final ResolverSet resolverSet;
 
+    public OperationMessageProcessor(ValueResolver configuration, Operation operation, ResolverSet resolverSet)
+    {
+        this.configuration = configuration;
+        this.operation = operation;
+        this.resolverSet = resolverSet;
+    }
+
     @Override
     public MuleEvent process(MuleEvent event) throws MuleException
     {
@@ -34,20 +40,20 @@ public final class OperationMessageProcessor implements MessageProcessor
 
         // for now this is fine because the execution engine is blocking. When we move
         // to a non-blocking engine, this future needs to be handled differently
-        Object result = future.get();
-
-        if (result instanceof MuleEvent)
-        {
-            return (MuleEvent) result;
-        }
-        else if (result instanceof MuleMessage)
-        {
-            event.setMessage((MuleMessage) result);
-        }
-        else
-        {
-            event.getMessage().setPayload(result);
-        }
+        //Object result = future.get();
+        //
+        //if (result instanceof MuleEvent)
+        //{
+        //    return (MuleEvent) result;
+        //}
+        //else if (result instanceof MuleMessage)
+        //{
+        //    event.setMessage((MuleMessage) result);
+        //}
+        //else
+        //{
+        //    event.getMessage().setPayload(result);
+        //}
 
         return event;
     }

@@ -9,12 +9,18 @@ package org.mule.module.extensions.internal.runtime.resolver;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
 
-public class StaticValueResolver implements ValueResolver
+/**
+ * A {@link ValueResolver} which always returns the same
+ * constant value.
+ *
+ * @since 3.7.0
+ */
+public class StaticValueResolver<T> implements ValueResolver<T>
 {
 
-    private final Object value;
+    private final T value;
 
-    public StaticValueResolver(Object value)
+    public StaticValueResolver(T value)
     {
         this.value = value;
     }
@@ -23,13 +29,13 @@ public class StaticValueResolver implements ValueResolver
      * {@inheritDoc}
      */
     @Override
-    public Object resolve(MuleEvent event) throws MuleException
+    public T resolve(MuleEvent event) throws MuleException
     {
         return value;
     }
 
     /**
-     * {@inheritDoc}
+     * @return {@value false}
      */
     @Override
     public boolean isDynamic()

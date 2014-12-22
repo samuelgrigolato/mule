@@ -28,7 +28,7 @@ import org.apache.commons.lang.StringUtils;
  *
  * @since 3.7.0
  */
-public class RegistryLookupValueResolver extends AbstractDynamicValueResolver
+public class RegistryLookupValueResolver<T> implements ValueResolver<T>
 {
 
     private final String key;
@@ -53,8 +53,17 @@ public class RegistryLookupValueResolver extends AbstractDynamicValueResolver
      * @throws Exception
      */
     @Override
-    public Object resolve(MuleEvent event) throws MuleException
+    public T resolve(MuleEvent event) throws MuleException
     {
         return event.getMuleContext().getRegistry().get(key);
+    }
+
+    /**
+     * @return {@value true}
+     */
+    @Override
+    public boolean isDynamic()
+    {
+        return true;
     }
 }

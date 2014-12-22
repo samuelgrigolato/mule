@@ -26,7 +26,7 @@ import java.util.Map;
  *
  * @since 3.7.0
  */
-public class ConfigurationResolverSetObjectBuilder extends BaseObjectBuilder
+public class ConfigurationResolverSetObjectBuilder extends BaseObjectBuilder<Object>
 {
 
     private final Configuration configuration;

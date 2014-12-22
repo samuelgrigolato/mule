@@ -279,8 +279,8 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
 
         List<Parameter> parameters = operation.getParameters();
         assertThat(parameters, hasSize(2));
-        assertParameter(parameters.get(0), MTOM_ENABLED, MTOM_DESCRIPTION, true, false, of(Boolean.class), BOOLEAN, true);
-        assertParameter(parameters.get(1), OPERATION, THE_OPERATION_TO_USE, true, true, of(String.class), STRING, null);
+        assertParameter(parameters.get(0), OPERATION, THE_OPERATION_TO_USE, true, true, of(String.class), STRING, null);
+        assertParameter(parameters.get(1), MTOM_ENABLED, MTOM_DESCRIPTION, true, false, of(Boolean.class), BOOLEAN, true);
     }
 
     private void assertBroadcastOperation(List<Operation> operations) throws NoSuchOperationException
@@ -293,9 +293,9 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
 
         List<Parameter> parameters = operation.getParameters();
         assertThat(parameters, hasSize(3));
-        assertParameter(parameters.get(0), CALLBACK, CALLBACK_DESCRIPTION, false, true, of(Operation.class), DataQualifier.OPERATION, null);
+        assertParameter(parameters.get(0), OPERATION, THE_OPERATION_TO_USE, true, true, of(List.class, String.class), LIST, null);
         assertParameter(parameters.get(1), MTOM_ENABLED, MTOM_DESCRIPTION, true, false, of(Boolean.class), BOOLEAN, true);
-        assertParameter(parameters.get(2), OPERATION, THE_OPERATION_TO_USE, true, true, of(List.class, String.class), LIST, null);
+        assertParameter(parameters.get(2), CALLBACK, CALLBACK_DESCRIPTION, false, true, of(Operation.class), DataQualifier.OPERATION, null);
     }
     private void assertArglessOperation(List<Operation> operations) throws NoSuchOperationException
     {
@@ -340,26 +340,5 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
     private DeclarationConstruct createDeclarationConstruct()
     {
         return DeclarationTestCase.createConstruct();
-    }
-
-    //private void strictTypeAssert(List<DataType> types, Class<?> expected, Class<?>[]... genericTypes)
-    //{
-    //    assertEquals(1, types.size());
-    //    strictTypeAssert(types.get(0), expected, genericTypes);
-    //}
-    //
-    //private void strictTypeAssert(DataType type, Class<?> expected, Class<?>[]... genericTypes)
-    //{
-    //    assertEquals(expected, type.getRawType());
-    //    Arrays.equals(genericTypes, type.getGenericTypes());
-    //}
-
-    public static class InvalidConstructorConfiguration
-    {
-
-        @SuppressWarnings("unused")
-        public InvalidConstructorConfiguration(String value)
-        {
-        }
     }
 }

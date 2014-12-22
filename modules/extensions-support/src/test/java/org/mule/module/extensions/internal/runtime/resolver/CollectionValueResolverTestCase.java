@@ -22,32 +22,46 @@ import org.mule.module.extensions.internal.util.ExtensionsTestUtils;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.junit.runners.Parameterized;
 
-@RunWith(MockitoJUnitRunner.class)
-public abstract class AbstractCollectionValueResolverTestCase extends AbstractMuleTestCase
+@RunWith(Parameterized.class)
+public class CollectionValueResolverTestCase extends AbstractMuleTestCase
 {
+
+    private Class<? extends Collection> collectionType;
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data()
+    {
+        return Arrays.asList(new Object[][] {{ArrayList.class}, {HashSet.class}});
+    }
 
     private CollectionValueResolver resolver;
     private List<ValueResolver> childResolvers;
     private List<Integer> expectedValues;
-
-    @Mock
     private MuleContext muleContext;
-
-    @Mock
     private MuleEvent event;
+
+    public CollectionValueResolverTestCase(Class<? extends Collection> collectionType)
+    {
+        this.collectionType = collectionType;
+    }
 
     @Before
     public void before() throws Exception
     {
+        muleContext = mock(MuleContext.class);
+        event = mock(MuleEvent.class);
+
+        collectionType = ArrayList.class;
         childResolvers = new ArrayList();
         expectedValues = new ArrayList<>();
 
@@ -113,7 +127,7 @@ public abstract class AbstractCollectionValueResolverTestCase extends AbstractMu
     public void collectionOfExpectedType() throws Exception
     {
         Collection<Object> resolved = (Collection<Object>) resolver.resolve(mock(MuleEvent.class));
-        assertThat(resolved, instanceOf(getExpectedCollectionType()));
+        assertThat(resolved, instanceOf(collectionType));
     }
 
     @Test
@@ -155,19 +169,19 @@ public abstract class AbstractCollectionValueResolverTestCase extends AbstractMu
         ExtensionsTestUtils.verifyAllDisposed(childResolvers);
     }
 
-
-    protected abstract CollectionValueResolver createCollectionResolver(List<ValueResolver> childResolvers);
-
-    protected abstract Class<? extends Collection> getExpectedCollectionType();
-
     protected int getChildResolversCount()
     {
         return 10;
     }
 
+    private CollectionValueResolver createCollectionResolver(List<ValueResolver> childResolvers)
+    {
+        return new CollectionValueResolver(collectionType, childResolvers);
+    }
+
     protected void doAssertOf(Class<? extends Collection> collectionType, Class<? extends ValueResolver> expectedResolverType)
     {
-        ValueResolver resolver = CollectionValueResolver.of(mock(collectionType).getClass(), new ArrayList<ValueResolver>());
+        ValueResolver resolver = new CollectionValueResolver(mock(collectionType).getClass(), new ArrayList<ValueResolver>());
         assertThat(resolver.getClass() == expectedResolverType, is(true));
     }
 }

@@ -12,7 +12,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertThat;
-import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
 import org.mule.tck.junit4.AbstractMuleContextTestCase;
 
 abstract class AbstractValueResolverTestCase extends AbstractMuleContextTestCase

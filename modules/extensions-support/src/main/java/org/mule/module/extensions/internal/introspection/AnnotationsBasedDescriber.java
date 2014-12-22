@@ -156,7 +156,7 @@ public class AnnotationsBasedDescriber implements Describer
         {
             Operation annotation = method.getAnnotation(Operation.class);
             OperationConstruct operation = declaration.withOperation(resolveOperationName(method, annotation))
-                    .implementedIn(new TypeAwareOperationImplementation(actingClass));
+                    .implementedIn(new TypeAwareOperationImplementation(actingClass, method));
 
             declareOperationParameters(method, operation);
         }

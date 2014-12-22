@@ -6,6 +6,7 @@
  */
 package org.mule.module.extensions.internal.runtime.resolver;
 
+import static org.mule.util.Preconditions.checkArgument;
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
@@ -21,25 +22,47 @@ import org.mule.module.extensions.internal.runtime.ObjectBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ObjectBuilderValueResolver implements ValueResolver, Lifecycle, MuleContextAware
+/**
+ * A {@link ValueResolver} which wraps an {@link ObjectBuilder}
+ * and calls {@link ObjectBuilder#build(MuleEvent)} on each
+ * {@link #resolve(MuleEvent)}.
+ * <p/>
+ * It implements {@link Lifecycle} and propagates all lifecycle events to
+ * the underlying {@code builder}
+ *
+ * @param <T>
+ * @since 3.7.0
+ */
+public class ObjectBuilderValueResolver<T> implements ValueResolver<T>, Lifecycle, MuleContextAware
 {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ObjectBuilderValueResolver.class);
 
-    private final ObjectBuilder builder;
+    private final ObjectBuilder<T> builder;
     private MuleContext muleContext;
 
-    public ObjectBuilderValueResolver(ObjectBuilder builder)
+    public ObjectBuilderValueResolver(ObjectBuilder<T> builder)
     {
+        checkArgument(builder != null, "builder cannot be null");
         this.builder = builder;
     }
 
+    /**
+     * Delegates to {@code builder}
+     *
+     * @param event a {@link MuleEvent}
+     * @return the {@code builder}'s output object
+     * @throws MuleException
+     */
     @Override
-    public Object resolve(MuleEvent event) throws MuleException
+    public T resolve(MuleEvent event) throws MuleException
     {
         return builder.build(event);
     }
 
+    /**
+     * @return {@code true} if {@code builder} is dynamic
+     */
     @Override
     public boolean isDynamic()
     {

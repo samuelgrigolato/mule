@@ -28,14 +28,14 @@ import org.slf4j.LoggerFactory;
  *
  * @since 3.7.0
  */
-abstract class BaseValueResolverWrapper implements ValueResolver, Lifecycle, MuleContextAware
+abstract class BaseValueResolverWrapper<T> implements ValueResolver<T>, Lifecycle, MuleContextAware
 {
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
-    protected ValueResolver delegate;
+    protected ValueResolver<T> delegate;
     protected MuleContext muleContext;
 
-    BaseValueResolverWrapper(ValueResolver delegate)
+    BaseValueResolverWrapper(ValueResolver<T> delegate)
     {
         this.delegate = delegate;
     }
@@ -43,7 +43,7 @@ abstract class BaseValueResolverWrapper implements ValueResolver, Lifecycle, Mul
     /**
      * Resolves delegating into {@link #delegate#isDynamic()}
      *
-     * @return wheter the {@link #delegate} is dynamic or not
+     * @return whether the {@link #delegate} is dynamic or not
      */
     @Override
     public boolean isDynamic()

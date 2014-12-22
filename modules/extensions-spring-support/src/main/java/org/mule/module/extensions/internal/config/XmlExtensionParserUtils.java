@@ -81,7 +81,7 @@ final class XmlExtensionParserUtils
                                                                DataType collectionType)
     {
         final DataType itemsType = collectionType.getGenericTypes().length > 0 ? collectionType.getGenericTypes()[0] : DataType.of(Object.class);
-        final List<ValueResolver> resolvers = new LinkedList<>();
+        final List<ValueResolver<Object>> resolvers = new LinkedList<>();
 
         for (final ElementDescriptor item : collectionElement.getChildsByName(childElementName))
         {
@@ -104,7 +104,7 @@ final class XmlExtensionParserUtils
             itemsType.getQualifier().accept(visitor);
         }
 
-        return CollectionValueResolver.of((Class<? extends Collection>) collectionType.getRawType(), resolvers);
+        return CollectionValueResolver.of((Class<Collection>) collectionType.getRawType(), resolvers);
     }
 
     private static ValueResolver parseCollection(ElementDescriptor element,
@@ -232,7 +232,7 @@ final class XmlExtensionParserUtils
         return new ObjectBuilderValueResolver(recursePojoProperties(pojoType.getRawType(), element));
     }
 
-    private static ObjectBuilder recursePojoProperties(Class<?> declaringClass, ElementDescriptor element)
+    private static ObjectBuilder<Object> recursePojoProperties(Class<?> declaringClass, ElementDescriptor element)
     {
         ObjectBuilder builder = new DefaultObjectBuilder(declaringClass);
 

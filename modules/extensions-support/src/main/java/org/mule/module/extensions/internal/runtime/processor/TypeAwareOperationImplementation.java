@@ -8,11 +8,9 @@ package org.mule.module.extensions.internal.runtime.processor;
 
 import static org.mule.module.extensions.internal.util.IntrospectionUtils.checkInstantiable;
 import static org.mule.util.Preconditions.checkArgument;
-import org.mule.extensions.introspection.Operation;
 import org.mule.extensions.introspection.OperationContext;
 import org.mule.extensions.introspection.OperationImplementation;
 import org.mule.extensions.introspection.Parameter;
-import org.mule.module.extensions.internal.introspection.MuleExtensionAnnotationParser;
 import org.mule.repackaged.internal.org.springframework.util.ReflectionUtils;
 
 import com.google.common.util.concurrent.Futures;
@@ -35,17 +33,15 @@ public final class TypeAwareOperationImplementation implements OperationImplemen
     private static final ReturnDelegate VALUE_RETURN_DELEGATE = new ValueReturnDelegate();
 
     private final Class<?> actingClass;
-    private final Operation operation;
-    private final Method method;
+    private final Method operationMethod;
     private final ReturnDelegate returnDelegate;
 
-    public TypeAwareOperationImplementation(Class<?> actingClass, Operation operation)
+    public TypeAwareOperationImplementation(Class<?> actingClass, Method operationMethod)
     {
         checkInstantiable(actingClass);
-        checkArgument(operation != null, "operation cannot be null");
+        checkArgument(operationMethod != null, "operation method cannot be null");
         this.actingClass = actingClass;
-        this.operation = operation;
-        method = MuleExtensionAnnotationParser.getOperationMethod(actingClass, operation);
+        this.operationMethod = operationMethod;
         returnDelegate = isVoid() ? VOID_RETURN_DELEGATE : VALUE_RETURN_DELEGATE;
     }
 
@@ -53,7 +49,7 @@ public final class TypeAwareOperationImplementation implements OperationImplemen
     public Future<Object> execute(OperationContext operationContext)
     {
         Map<Parameter, Object> parameters = operationContext.getParametersValues();
-        Object result = ReflectionUtils.invokeMethod(method, newOperationInstance(), parameters.values().toArray());
+        Object result = ReflectionUtils.invokeMethod(operationMethod, newOperationInstance(), parameters.values().toArray());
 
         return Futures.immediateFuture(returnDelegate.asReturnValue(result, operationContext));
     }
@@ -66,15 +62,13 @@ public final class TypeAwareOperationImplementation implements OperationImplemen
         }
         catch (Exception e)
         {
-            throw new RuntimeException(
-                    String.format("Could not execute operation %s because implementation type %s could not be instantiated",
-                                  operation.getName(), actingClass.getName()), e);
+            throw new RuntimeException(String.format("Implementation type %s could not be instantiated", actingClass.getName()), e);
         }
     }
 
     private boolean isVoid()
     {
-        Class<?> returnType = method.getReturnType();
+        Class<?> returnType = operationMethod.getReturnType();
         return returnType.equals(Void.class) || returnType.equals(void.class);
     }
 

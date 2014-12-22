@@ -34,7 +34,7 @@ import java.lang.reflect.Method;
  *
  * @since 3.7.0
  */
-public interface ObjectBuilder
+public interface ObjectBuilder<T>
 {
 
     /**
@@ -46,7 +46,7 @@ public interface ObjectBuilder
      * @return this builder
      * @throws {@link java.lang.IllegalArgumentException} if method or resolver are {@code null}
      */
-    ObjectBuilder addPropertyResolver(Method method, ValueResolver resolver);
+    ObjectBuilder<T> addPropertyResolver(Method method, ValueResolver<? extends Object> resolver);
 
     /**
      * Adds a property which value is given as a constant
@@ -55,7 +55,7 @@ public interface ObjectBuilder
      * @param value  the value to be set
      * @return this builder
      */
-    ObjectBuilder addPropertyValue(Method method, Object value);
+    ObjectBuilder<T> addPropertyValue(Method method, Object value);
 
     /**
      * Whether any of the registered {@link ValueResolver}s are dynamic
@@ -73,5 +73,5 @@ public interface ObjectBuilder
      * @return a new instance
      * @throws {@link MuleException}
      */
-    Object build(MuleEvent event) throws MuleException;
+    T build(MuleEvent event) throws MuleException;
 }

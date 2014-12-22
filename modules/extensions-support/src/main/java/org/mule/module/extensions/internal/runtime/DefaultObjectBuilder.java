@@ -18,12 +18,12 @@ import org.mule.util.ClassUtils;
  *
  * @since 3.7.0
  */
-public class DefaultObjectBuilder extends BaseObjectBuilder
+public class DefaultObjectBuilder<T> extends BaseObjectBuilder<T>
 {
 
-    private Class<?> prototypeClass;
+    private Class<T> prototypeClass;
 
-    public DefaultObjectBuilder(Class<?> prototypeClass)
+    public DefaultObjectBuilder(Class<T> prototypeClass)
     {
         checkInstantiable(prototypeClass);
         this.prototypeClass = prototypeClass;
@@ -34,7 +34,7 @@ public class DefaultObjectBuilder extends BaseObjectBuilder
      * {@inheritDoc}
      */
     @Override
-    protected Object instantiateObject()
+    protected T instantiateObject()
     {
         try
         {

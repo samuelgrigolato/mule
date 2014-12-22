@@ -6,6 +6,7 @@
  */
 package org.mule.module.extensions.internal.runtime.resolver;
 
+import static org.mule.module.extensions.internal.util.IntrospectionUtils.checkInstantiable;
 import static org.mule.util.Preconditions.checkArgument;
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
@@ -18,38 +19,78 @@ import org.mule.module.extensions.internal.util.MuleExtensionUtils;
 
 import com.google.common.collect.ImmutableList;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class CollectionValueResolver<T> implements ValueResolver<Collection<T>>, Lifecycle, MuleContextAware
+/**
+ * A {@link ValueResolver} that takes a list of {@link ValueResolver}s
+ * and upon invocation of {@link #resolve(MuleEvent)} it return a
+ * {@link Collection} of values with the outcome of each original resolver.
+ * <p/>
+ * This class implements {@link Lifecycle} and propagates those events to each
+ * of the {@code resolvers}
+ *
+ * @param <T>
+ * @since 3.7.0
+ */
+public final class CollectionValueResolver<T> implements ValueResolver<Collection<T>>, Lifecycle, MuleContextAware
 {
 
     private final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
     private final List<ValueResolver<T>> resolvers;
+    private final Class<? extends Collection> collectionType;
     private MuleContext muleContext;
 
     public static <T> CollectionValueResolver<T> of(Class<? extends Collection> collectionType, List<ValueResolver<T>> resolvers)
     {
-        return Set.class.isAssignableFrom(collectionType)
-               ? new SetValueResolver<T>(resolvers)
-               : new ListValueResolver<T>(resolvers);
+        if (List.class.equals(collectionType) || Collection.class.equals(collectionType) || Iterable.class.equals(collectionType))
+        {
+            return new CollectionValueResolver<>(ArrayList.class, resolvers);
+        }
+        else if (Set.class.equals(collectionType))
+        {
+            return new CollectionValueResolver<>(HashSet.class, resolvers);
+        }
+        else
+        {
+            return new CollectionValueResolver<>(collectionType, resolvers);
+        }
     }
 
-    public CollectionValueResolver(List<ValueResolver<T>> resolvers)
+    /**
+     * Creates a new instance
+     *
+     * @param collectionType the {@link Class} for a concrete {@link Collection} type with a default constructor
+     * @param resolvers      a not {@code null} {@link List} of resolvers
+     */
+    public CollectionValueResolver(Class<? extends Collection> collectionType, List<ValueResolver<T>> resolvers)
     {
+        checkInstantiable(collectionType);
         checkArgument(resolvers != null, "resolvers cannot be null");
+
+        this.collectionType = collectionType;
         this.resolvers = ImmutableList.copyOf(resolvers);
     }
 
+    /**
+     * Passes the given {@code event} to each resolvers and outputs
+     * a collection of type {@code collectionType} with each result
+     *
+     * @param event a {@link MuleEvent} the event to evaluate
+     * @return a {@link Collection} of type {@code collectionType}
+     * @throws MuleException
+     */
     @Override
     public Collection<T> resolve(MuleEvent event) throws MuleException
     {
-        Collection<T> collection = instantiateCollection(resolvers.size());
+        Collection<T> collection = instantiateCollection();
         for (ValueResolver<T> resolver : resolvers)
         {
             collection.add(resolver.resolve(event));
@@ -59,7 +100,7 @@ public abstract class CollectionValueResolver<T> implements ValueResolver<Collec
     }
 
     /**
-     * {@inheritDoc}
+     * @return {@code true} if at least one of the {@code resolvers} are dynamic
      */
     @Override
     public boolean isDynamic()
@@ -67,7 +108,17 @@ public abstract class CollectionValueResolver<T> implements ValueResolver<Collec
         return MuleExtensionUtils.hasAnyDynamic(resolvers);
     }
 
-    protected abstract Collection<T> instantiateCollection(int resolversCount);
+    private Collection<T> instantiateCollection()
+    {
+        try
+        {
+            return collectionType.newInstance();
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException("Could not create instance of " + collectionType.getName(), e);
+        }
+    }
 
     @Override
     public void initialise() throws InitialisationException

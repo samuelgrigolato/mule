@@ -33,13 +33,13 @@ import org.mule.api.lifecycle.Stoppable;
  *
  * @since 3.7.0
  */
-public class CachingValueResolverWrapper extends BaseValueResolverWrapper
+public class CachingValueResolverWrapper<T> extends BaseValueResolverWrapper<T>
 {
 
-    private Object value;
+    private T value;
     private CachingDelegate cacheDelegate = new FirstTimeCachingDelegate();
 
-    public CachingValueResolverWrapper(ValueResolver delegate)
+    public CachingValueResolverWrapper(ValueResolver<T> delegate)
     {
         super(delegate);
     }
@@ -54,9 +54,9 @@ public class CachingValueResolverWrapper extends BaseValueResolverWrapper
      * @throws Exception
      */
     @Override
-    public Object resolve(MuleEvent event) throws MuleException
+    public T resolve(MuleEvent event) throws MuleException
     {
-        return cacheDelegate.get(event);
+        return (T) cacheDelegate.get(event);
     }
 
     /**

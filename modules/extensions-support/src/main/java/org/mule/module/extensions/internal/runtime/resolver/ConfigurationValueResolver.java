@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @since 3.7.0
  */
-public final class ConfigurationValueResolver implements ValueResolver, MuleContextAware, Lifecycle, NamedObject
+public final class ConfigurationValueResolver implements ValueResolver<Object>, MuleContextAware, Lifecycle, NamedObject
 {
 
     private final String name;

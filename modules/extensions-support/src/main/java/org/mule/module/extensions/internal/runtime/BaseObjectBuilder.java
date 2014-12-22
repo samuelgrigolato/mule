@@ -37,11 +37,12 @@ import org.slf4j.LoggerFactory;
  *
  * @since 3.7.0
  */
-abstract class BaseObjectBuilder implements ObjectBuilder, Lifecycle, MuleContextAware
+abstract class BaseObjectBuilder<T> implements ObjectBuilder<T>, Lifecycle, MuleContextAware
 {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultObjectBuilder.class);
-    private final Map<Method, ValueResolver> resolvers = new HashMap<>();
+
+    private final Map<Method, ValueResolver<Object>> resolvers = new HashMap<>();
     private final Map<Method, Object> values = new HashMap<>();
     private MuleContext muleContext;
 
@@ -49,23 +50,23 @@ abstract class BaseObjectBuilder implements ObjectBuilder, Lifecycle, MuleContex
      * Returns the instance to be returned before the properties have
      * been applied to it
      */
-    protected abstract Object instantiateObject();
+    protected abstract T instantiateObject();
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public ObjectBuilder addPropertyResolver(Method method, ValueResolver resolver)
+    public ObjectBuilder<T> addPropertyResolver(Method method, ValueResolver<? extends Object> resolver)
     {
         checkArgument(method != null, "method cannot be null");
         checkArgument(resolver != null, "resolver cannot be null");
 
-        resolvers.put(method, resolver);
+        resolvers.put(method, (ValueResolver<Object>) resolver);
         return this;
     }
 
     @Override
-    public ObjectBuilder addPropertyValue(Method method, Object value)
+    public ObjectBuilder<T> addPropertyValue(Method method, Object value)
     {
         checkArgument(method != null, "method cannot be null");
 
@@ -86,11 +87,11 @@ abstract class BaseObjectBuilder implements ObjectBuilder, Lifecycle, MuleContex
      * {@inheritDoc}
      */
     @Override
-    public Object build(MuleEvent event) throws MuleException
+    public T build(MuleEvent event) throws MuleException
     {
-        Object object = instantiateObject();
+        T object = instantiateObject();
 
-        for (Map.Entry<Method, ValueResolver> entry : resolvers.entrySet())
+        for (Map.Entry<Method, ValueResolver<Object>> entry : resolvers.entrySet())
         {
             ReflectionUtils.invokeMethod(entry.getKey(), object, entry.getValue().resolve(event));
         }
@@ -112,7 +113,7 @@ abstract class BaseObjectBuilder implements ObjectBuilder, Lifecycle, MuleContex
     @Override
     public void initialise() throws InitialisationException
     {
-        for (ValueResolver resolver : resolvers.values())
+        for (ValueResolver<?> resolver : resolvers.values())
         {
             if (resolver instanceof MuleContextAware)
             {

@@ -27,7 +27,7 @@ import org.mule.api.lifecycle.Startable;
  *
  * @since 3.7.0
  */
-public class InitialLifecycleValueResolver extends BaseValueResolverWrapper
+public class InitialLifecycleValueResolver<T> extends BaseValueResolverWrapper<T>
 {
 
     /**
@@ -37,7 +37,7 @@ public class InitialLifecycleValueResolver extends BaseValueResolverWrapper
      * @param muleContext a not {code null} {@link ValueResolver}
      * @throws IllegalArgumentException if either {@code delegate} or {@code muleContext} are {@code null}
      */
-    public InitialLifecycleValueResolver(ValueResolver delegate, MuleContext muleContext)
+    public InitialLifecycleValueResolver(ValueResolver<T> delegate, MuleContext muleContext)
     {
         super(delegate);
         checkArgument(muleContext != null, "muleContext cannot be null");
@@ -54,9 +54,9 @@ public class InitialLifecycleValueResolver extends BaseValueResolverWrapper
      * @throws Exception
      */
     @Override
-    public Object resolve(MuleEvent event) throws MuleException
+    public T resolve(MuleEvent event) throws MuleException
     {
-        Object resolved = delegate.resolve(event);
+        T resolved = delegate.resolve(event);
 
         LifecycleUtils.initialiseIfNeeded(resolved, muleContext);
 

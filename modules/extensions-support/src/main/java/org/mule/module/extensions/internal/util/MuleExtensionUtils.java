@@ -146,7 +146,7 @@ public final class MuleExtensionUtils
         }
     }
 
-    public static <T> boolean hasAnyDynamic(Iterable<ValueResolver<T>> resolvers)
+    public static <T extends Object> boolean hasAnyDynamic(Iterable<ValueResolver<T>> resolvers)
     {
         for (ValueResolver resolver : resolvers)
         {

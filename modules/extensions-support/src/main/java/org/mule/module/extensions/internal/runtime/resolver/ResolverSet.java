@@ -31,22 +31,21 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A {@link ValueResolver} which is based on associating a set of
- * {@link Parameter}s to a {@link ValueResolver}. The result
- * of evaluating this resolver is a {@link ResolverSetResult}.public static final
+ * {@link Parameter}s -&gt; {@link ValueResolver} pairs. The result
+ * of evaluating this resolver is a {@link ResolverSetResult}.
  * <p/>
  * The general purpose of this class is to repeatedly evaluate a set of {@link ValueResolver}s
  * which results are to be used in the construction of an object, so that the structure
  * of such can be described only once (by the set of {@link Parameter}s and {@link ValueResolver}s
  * but evaluated many times. With this goal in mind is that the return value of this resolver
- * will always be a {@link ResolverSetResult} and that this resolver includes the method
- * {@link #toObjectBuilderOf(Class)}, so that an {@link ObjectBuilder} can easily be derived from
- * this definition.
+ * will always be a {@link ResolverSetResult} which then can be used by a {@link ObjectBuilder}
+ * to generate an actual object.
  * <p/>
  * Instances of this class are to be considered thread safe and reusable
  *
  * @since 3.7.0
  */
-public class ResolverSet implements ValueResolver, Lifecycle, MuleContextAware
+public class ResolverSet implements ValueResolver<Object>, Lifecycle, MuleContextAware
 {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResolverSet.class);
