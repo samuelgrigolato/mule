@@ -9,11 +9,11 @@ package org.mule.extension.validation;
 import org.mule.api.DefaultMuleException;
 import org.mule.config.i18n.MessageFactory;
 import org.mule.extension.validation.exception.ValidationException;
-import org.mule.extensions.annotation.Configurable;
-import org.mule.extensions.annotation.Extension;
-import org.mule.extensions.annotation.Operation;
-import org.mule.extensions.annotation.capability.Xml;
-import org.mule.extensions.annotation.param.Optional;
+import org.mule.extensions.annotations.Configurable;
+import org.mule.extensions.annotations.Extension;
+import org.mule.extensions.annotations.Operation;
+import org.mule.extensions.annotations.capability.Xml;
+import org.mule.extensions.annotations.param.Optional;
 import org.mule.util.ClassUtils;
 
 import org.apache.commons.lang.StringUtils;
@@ -21,7 +21,7 @@ import org.apache.commons.lang.StringUtils;
 /**
  * Validations module
  */
-@Extension(name = "validation", version = "3.6")
+@Extension(name = "validation", version = "3.7")
 @Xml(namespace = "validation")
 public class ValidationExtension
 {

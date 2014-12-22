@@ -6,6 +6,9 @@
  */
 package org.mule.module.extensions.internal.config;
 
+import static org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants.ATTRIBUTE_NAME_CONFIG;
+import static org.mule.module.extensions.internal.config.XmlExtensionParserUtils.setNoRecurseOnDefinition;
+import static org.mule.module.extensions.internal.config.XmlExtensionParserUtils.toElementDescriptorBeanDefinition;
 import org.mule.config.spring.factories.PollingMessageSourceFactoryBean;
 import org.mule.config.spring.util.SpringXMLUtils;
 import org.mule.enricher.MessageEnricher;
@@ -17,6 +20,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.PropertyValue;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.ManagedList;
 import org.springframework.beans.factory.xml.BeanDefinitionParser;
@@ -24,12 +28,12 @@ import org.springframework.beans.factory.xml.ParserContext;
 import org.springframework.util.xml.DomUtils;
 import org.w3c.dom.Element;
 
-final class ExtensionOperationBeanDefinitionParser implements BeanDefinitionParser
+final class OperationBeanDefinitionParser implements BeanDefinitionParser
 {
 
     private final Operation operation;
 
-    ExtensionOperationBeanDefinitionParser(Operation operation)
+    OperationBeanDefinitionParser(Operation operation)
     {
         this.operation = operation;
     }
@@ -37,8 +41,30 @@ final class ExtensionOperationBeanDefinitionParser implements BeanDefinitionPars
     @Override
     public BeanDefinition parse(Element element, ParserContext parserContext)
     {
-        return null;
+        BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(OperationFactoryBean.class);
+        builder.setScope(BeanDefinition.SCOPE_PROTOTYPE);
+        parseConfigRef(element, builder);
+        builder.addConstructorArgValue(operation);
+        builder.addConstructorArgValue(toElementDescriptorBeanDefinition(element));
+
+        BeanDefinition definition = builder.getBeanDefinition();
+        setNoRecurseOnDefinition(definition);
+        attachProcessorDefinition(parserContext, definition);
+
+        return definition;
     }
+
+    private void parseConfigRef(Element element, BeanDefinitionBuilder builder)
+    {
+        String configRef = element.getAttribute(ATTRIBUTE_NAME_CONFIG);
+        if (StringUtils.isBlank(configRef))
+        {
+            throw new IllegalArgumentException("All operations must provide a config-ref element");
+        }
+
+        builder.addConstructorArgValue(new RuntimeBeanReference(configRef));
+    }
+
 
     private String generateChildBeanName(Element element)
     {

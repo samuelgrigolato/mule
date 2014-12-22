@@ -13,7 +13,6 @@ import org.mule.config.spring.MuleArtifactContext;
 import org.mule.extensions.ExtensionsManager;
 import org.mule.extensions.introspection.Configuration;
 import org.mule.extensions.introspection.DataType;
-import org.mule.extensions.introspection.Described;
 import org.mule.extensions.introspection.Extension;
 import org.mule.extensions.introspection.Operation;
 import org.mule.extensions.introspection.Parameter;
@@ -30,7 +29,6 @@ import java.util.Map;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.xml.BeanDefinitionParser;
 import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 import org.springframework.beans.factory.xml.ParserContext;
 import org.w3c.dom.Element;
@@ -107,59 +105,34 @@ public class ExtensionsNamespaceHandler extends NamespaceHandlerSupport
 
     private void registerOperations(Extension extension) throws Exception
     {
-        register(extension.getOperations(), new ParserFactory()
+        for (Operation operation : extension.getOperations())
         {
-            @Override
-            public BeanDefinitionParser createParser(Object... params)
-            {
-                return new ExtensionOperationBeanDefinitionParser((Operation) params[0]);
-            }
-        });
+            registerBeanDefinitionParser(hyphenize(operation.getName()), new OperationBeanDefinitionParser(operation));
+        }
     }
 
     private void registerConfigurations(Extension extension) throws Exception
     {
-        register(extension.getConfigurations(), new ParserFactory()
+        for (Configuration configuration : extension.getConfigurations())
         {
-            @Override
-            public BeanDefinitionParser createParser(Object... params)
-            {
-                return new ConfigurationBeanDefinitionParser((Configuration) params[0]);
-            }
-        });
-    }
-
-    private void register(Collection<? extends Described> objects, ParserFactory factory) throws Exception
-    {
-        for (Described described : objects)
-        {
-            registerBeanDefinitionParser(described.getName(), factory.createParser(described));
+            registerBeanDefinitionParser(configuration.getName(), new ConfigurationBeanDefinitionParser(configuration));
         }
     }
 
     private void registerTopLevelParameters(Extension extension)
     {
-        ParserFactory factory = new ParserFactory()
-        {
-            @Override
-            public BeanDefinitionParser createParser(Object... params)
-            {
-                return new TopLevelParameterTypeBeanDefinitionParser((DataType) params[0]);
-            }
-        };
-
         for (Configuration configuration : extension.getConfigurations())
         {
-            registerTopLevelParameter(extension, configuration.getParameters(), factory);
+            registerTopLevelParameter(extension, configuration.getParameters());
         }
 
         for (Operation operation : extension.getOperations())
         {
-            registerTopLevelParameter(extension, operation.getParameters(), factory);
+            registerTopLevelParameter(extension, operation.getParameters());
         }
     }
 
-    private void registerTopLevelParameter(final Extension extension, final DataType parameterType, final ParserFactory factory)
+    private void registerTopLevelParameter(final Extension extension, final DataType parameterType)
     {
         parameterType.getQualifier().accept(new BaseDataQualifierVisitor()
         {
@@ -170,7 +143,7 @@ public class ExtensionsNamespaceHandler extends NamespaceHandlerSupport
                 String name = hyphenize(getGlobalPojoTypeName(parameterType));
                 if (topLevelParameters.put(extension, name))
                 {
-                    registerBeanDefinitionParser(name, factory.createParser(parameterType));
+                    registerBeanDefinitionParser(name, new TopLevelParameterTypeBeanDefinitionParser(parameterType));
                 }
             }
 
@@ -179,7 +152,7 @@ public class ExtensionsNamespaceHandler extends NamespaceHandlerSupport
             {
                 if (!ArrayUtils.isEmpty(parameterType.getGenericTypes()))
                 {
-                    registerTopLevelParameter(extension, parameterType.getGenericTypes()[0], factory);
+                    registerTopLevelParameter(extension, parameterType.getGenericTypes()[0]);
                 }
             }
 
@@ -195,25 +168,25 @@ public class ExtensionsNamespaceHandler extends NamespaceHandlerSupport
                 if (genericTypes.length >= 1)
                 {
                     DataType keyType = genericTypes[0];
-                    registerTopLevelParameter(extension, keyType, factory);
+                    registerTopLevelParameter(extension, keyType);
                 }
 
                 if (genericTypes.length >= 2)
                 {
                     DataType valueType = parameterType.getGenericTypes()[0];
                     valueType.getQualifier().accept(this);
-                    registerTopLevelParameter(extension, valueType, factory);
+                    registerTopLevelParameter(extension, valueType);
                 }
             }
         });
 
     }
 
-    private void registerTopLevelParameter(Extension extension, Collection<Parameter> parameters, ParserFactory factory)
+    private void registerTopLevelParameter(Extension extension, Collection<Parameter> parameters)
     {
         for (final Parameter parameter : parameters)
         {
-            registerTopLevelParameter(extension, parameter.getType(), factory);
+            registerTopLevelParameter(extension, parameter.getType());
         }
     }
 
@@ -237,11 +210,5 @@ public class ExtensionsNamespaceHandler extends NamespaceHandlerSupport
         }
 
         throw new IllegalArgumentException(String.format("Could not find extension associated to namespace %s", namespace));
-    }
-
-    private interface ParserFactory
-    {
-
-        BeanDefinitionParser createParser(Object... params);
     }
 }

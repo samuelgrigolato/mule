@@ -39,7 +39,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class ModuleDefinitionParserTestCase extends ExtensionsFunctionalTestCase
+public class ConfigParserTestCase extends ExtensionsFunctionalTestCase
 {
 
     private static final String HEISENBERG_BYNAME = "heisenberg";

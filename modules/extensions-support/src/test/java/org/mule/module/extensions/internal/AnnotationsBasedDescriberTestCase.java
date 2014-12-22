@@ -69,6 +69,7 @@ public class AnnotationsBasedDescriberTestCase extends AbstractMuleTestCase
     private static final String KILL_CUSTOM_OPERATION = "killWithCustomMessage";
     private static final String HIDE_METH_IN_EVENT_OPERATION = "hideMethInEvent";
     private static final String HIDE_METH_IN_MESSAGE_OPERATION = "hideMethInMessage";
+    private static final String DIE = "die";
 
     private Describer describer;
 
@@ -163,13 +164,14 @@ public class AnnotationsBasedDescriberTestCase extends AbstractMuleTestCase
 
     private void assertTestModuleOperations(Declaration declaration) throws Exception
     {
-        assertThat(declaration.getOperations(), hasSize(6));
+        assertThat(declaration.getOperations(), hasSize(7));
         assertOperation(declaration, SAY_MY_NAME_OPERATION, "");
         assertOperation(declaration, GET_ENEMY_OPERATION, "");
         assertOperation(declaration, KILL_OPERATION, "");
         assertOperation(declaration, KILL_CUSTOM_OPERATION, "");
         assertOperation(declaration, HIDE_METH_IN_EVENT_OPERATION, "");
         assertOperation(declaration, HIDE_METH_IN_MESSAGE_OPERATION, "");
+        assertOperation(declaration, DIE, "");
 
         OperationDeclaration operation = getOperation(declaration, SAY_MY_NAME_OPERATION);
         assertThat(operation, is(notNullValue()));

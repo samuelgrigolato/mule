@@ -11,8 +11,6 @@ import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
 import org.mule.api.context.MuleContextAware;
-import org.mule.api.lifecycle.Initialisable;
-import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.transformer.MessageTransformer;
 import org.mule.api.transformer.Transformer;
 import org.mule.api.transformer.TransformerException;
@@ -39,7 +37,7 @@ import org.apache.commons.lang.StringUtils;
  * @param <T>
  * @since 3.7.0
  */
-public class EvaluateAndTransformValueResolver<T> implements ValueResolver<T>, MuleContextAware, Initialisable
+public class EvaluateAndTransformValueResolver<T> implements ValueResolver<T>, MuleContextAware
 {
 
     private final DataType expectedType;
@@ -114,14 +112,9 @@ public class EvaluateAndTransformValueResolver<T> implements ValueResolver<T>, M
     }
 
     @Override
-    public void initialise() throws InitialisationException
-    {
-        evaluator.initialize(muleContext.getExpressionManager());
-    }
-
-    @Override
     public void setMuleContext(MuleContext context)
     {
         muleContext = context;
+        evaluator.initialize(muleContext.getExpressionManager());
     }
 }

@@ -13,6 +13,7 @@ import org.mule.api.transport.PropertyScope;
 import org.mule.extensions.annotations.Operation;
 import org.mule.extensions.annotations.param.Optional;
 import org.mule.extensions.annotations.param.Payload;
+import org.mule.util.ValueHolder;
 
 import java.util.List;
 
@@ -20,14 +21,38 @@ import javax.inject.Inject;
 
 public class HeisenbergOperations
 {
+    private static final String SECRET_PACKAGE = "secretPackage";
+    private static final String METH = "meth";
+
+    public static ValueHolder<HeisenbergExtension> configHolder = new ValueHolder<>();
+    public static ValueHolder<MuleEvent> eventHolder = new ValueHolder<>();
+    public static ValueHolder<MuleMessage> messageHolder = new ValueHolder<>();
 
     @Inject
     private HeisenbergExtension config;
+
+    @Inject
+    private MuleEvent event;
+
+    @Inject
+    private MuleMessage message;
+
+    public HeisenbergOperations() {
+        // remove when injector is in place
+        config = configHolder.get();
+        event = eventHolder.get();
+        message = messageHolder.get();
+    }
 
     @Operation
     public String sayMyName()
     {
         return config.getMyName();
+    }
+
+    @Operation
+    public void die() {
+        config.setFinalHealth(HealthStatus.DEAD);
     }
 
     @Operation
@@ -58,14 +83,14 @@ public class HeisenbergOperations
     }
 
     @Operation
-    public void hideMethInEvent(MuleEvent event)
+    public void hideMethInEvent()
     {
-        hideMethInMessage(event.getMessage());
+        event.setFlowVariable(SECRET_PACKAGE, METH);
     }
 
     @Operation
-    public void hideMethInMessage(MuleMessage message)
+    public void hideMethInMessage()
     {
-        message.setProperty("secretPackage", "meth", PropertyScope.INVOCATION);
+        message.setProperty(SECRET_PACKAGE, METH, PropertyScope.INVOCATION);
     }
 }

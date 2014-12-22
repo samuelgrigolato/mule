@@ -4,7 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.extensions.internal.runtime.processor;
+package org.mule.module.extensions.internal.runtime;
 
 import static org.mule.module.extensions.internal.util.IntrospectionUtils.checkInstantiable;
 import static org.mule.util.Preconditions.checkArgument;
@@ -84,12 +84,7 @@ public final class TypeAwareOperationImplementation implements OperationImplemen
         @Override
         public Object asReturnValue(Object value, OperationContext operationContext)
         {
-            if (operationContext instanceof DefaultOperationContext)
-            {
-                return ((DefaultOperationContext) operationContext).getEvent();
-            }
-
-            return value;
+            return ((DefaultOperationContext) operationContext).getEvent();
         }
     }
 

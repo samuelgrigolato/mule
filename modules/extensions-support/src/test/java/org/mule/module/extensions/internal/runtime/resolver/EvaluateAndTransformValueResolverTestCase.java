@@ -106,7 +106,6 @@ public class EvaluateAndTransformValueResolverTestCase extends AbstractMuleConte
     {
         EvaluateAndTransformValueResolver resolver = new EvaluateAndTransformValueResolver(expression, DataType.of(expectedType));
         resolver.setMuleContext(muleContext);
-        resolver.initialise();
 
         return resolver;
     }
