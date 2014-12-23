@@ -21,7 +21,7 @@ import org.apache.commons.lang.builder.ToStringBuilder;
  *
  * @since 3.7.0
  */
-final class ImmutableParameter extends AbstractImmutableDescribed implements Parameter
+final class ImmutableParameter extends AbstractImmutableCapableDescribed implements Parameter
 {
 
     private static final Set<String> reservedNames = ImmutableSet.<String>builder().add("name").build();
@@ -36,9 +36,10 @@ final class ImmutableParameter extends AbstractImmutableDescribed implements Par
                                  DataType type,
                                  boolean required,
                                  boolean dynamic,
-                                 Object defaultValue)
+                                 Object defaultValue,
+                                 Set<Object> capabilities)
     {
-        super(name, description);
+        super(name, description, capabilities);
 
         if (reservedNames.contains(name))
         {

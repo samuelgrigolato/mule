@@ -27,6 +27,7 @@ import org.mule.extensions.introspection.declaration.Construct;
 import org.mule.extensions.introspection.declaration.DeclarationConstruct;
 import org.mule.extensions.introspection.declaration.OperationConstruct;
 import org.mule.extensions.introspection.declaration.ParameterConstruct;
+import org.mule.module.extensions.internal.capability.HiddenCapability;
 import org.mule.module.extensions.internal.runtime.TypeAwareOperationImplementation;
 import org.mule.module.extensions.internal.util.IntrospectionUtils;
 import org.mule.util.CollectionUtils;
@@ -173,6 +174,11 @@ public class AnnotationsBasedDescriber implements Describer
                                            : operation.with().optionalParameter(parameterDescriptor.getName()).defaultingTo(parameterDescriptor.getDefaultValue());
 
             parameter.describedAs(EMPTY).ofType(parameterDescriptor.getType());
+
+            if (parameterDescriptor.isHidden())
+            {
+                parameter.withCapability(new HiddenCapability());
+            }
         }
     }
 

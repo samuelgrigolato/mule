@@ -167,7 +167,8 @@ public final class DefaultExtensionFactory implements ExtensionFactory
                                       parameter.getType(),
                                       parameter.isRequired(),
                                       parameter.isDynamic(),
-                                      parameter.getDefaultValue());
+                                      parameter.getDefaultValue(),
+                                      parameter.getCapabilities());
     }
 
     private void validateMuleVersion(Declaration declaration)

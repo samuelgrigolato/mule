@@ -8,19 +8,17 @@ package org.mule.module.extensions;
 
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleMessage;
-import org.mule.api.NestedProcessor;
 import org.mule.api.transport.PropertyScope;
 import org.mule.extensions.annotations.Operation;
 import org.mule.extensions.annotations.param.Optional;
 import org.mule.extensions.annotations.param.Payload;
 import org.mule.util.ValueHolder;
 
-import java.util.List;
-
 import javax.inject.Inject;
 
 public class HeisenbergOperations
 {
+
     private static final String SECRET_PACKAGE = "secretPackage";
     private static final String METH = "meth";
 
@@ -37,7 +35,8 @@ public class HeisenbergOperations
     @Inject
     private MuleMessage message;
 
-    public HeisenbergOperations() {
+    public HeisenbergOperations()
+    {
         // remove when injector is in place
         config = configHolder.get();
         event = eventHolder.get();
@@ -51,7 +50,8 @@ public class HeisenbergOperations
     }
 
     @Operation
-    public void die() {
+    public void die()
+    {
         config.setFinalHealth(HealthStatus.DEAD);
     }
 
@@ -62,24 +62,15 @@ public class HeisenbergOperations
     }
 
     @Operation
-    public String kill(@Payload String goodbyeMessage, NestedProcessor enemiesLookup) throws Exception
+    public String kill(@Payload String victim, String goodbyeMessage) throws Exception
     {
-        return killWithCustomMessage(goodbyeMessage, enemiesLookup);
+        return killWithCustomMessage(victim, goodbyeMessage);
     }
 
     @Operation
-    public String killWithCustomMessage(@Optional(defaultValue = "#[payload]") String goodbyeMessage,
-                                        NestedProcessor enemiesLookup) throws Exception
+    public String killWithCustomMessage(@Optional(defaultValue = "#[payload]") String victim, String goodbyeMessage)
     {
-        List<String> toKill = (List<String>) enemiesLookup.process();
-        StringBuilder builder = new StringBuilder();
-
-        for (String kill : toKill)
-        {
-            builder.append(String.format("%s: %s", goodbyeMessage, kill)).append("\n");
-        }
-
-        return builder.toString();
+        return String.format("%s, %s", goodbyeMessage, victim);
     }
 
     @Operation

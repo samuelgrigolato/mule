@@ -50,7 +50,7 @@ import org.apache.commons.lang.StringUtils;
 public final class MuleExtensionAnnotationParser
 {
 
-    private static final Set<Class<?>> notParametrizableTypes = ImmutableSet.<Class<?>>builder()
+    private static final Set<Class<?>> disallowedOperationParameterTypes = ImmutableSet.<Class<?>>builder()
             .add(MuleEvent.class)
             .add(MuleMessage.class)
             .build();
@@ -119,10 +119,7 @@ public final class MuleExtensionAnnotationParser
 
         for (int i = 0; i < paramNames.length; i++)
         {
-            if (!isParametrizable(parameterTypes[i], parameterAnnotations[i]))
-            {
-                continue;
-            }
+            checkParametrizable(parameterTypes[i]);
 
             DataType dataType = adaptType(parameterTypes[i]);
 
@@ -141,6 +138,14 @@ public final class MuleExtensionAnnotationParser
             else
             {
                 parameter.setRequired(true);
+            }
+
+            Payload payload = (Payload) annotations.get(Payload.class);
+            if (payload != null)
+            {
+                parameter.setRequired(false);
+                parameter.setDefaultValue("#[payload]");
+                parameter.setHidden(true);
             }
 
             parameters.add(parameter);
@@ -167,14 +172,13 @@ public final class MuleExtensionAnnotationParser
         }
     }
 
-    private static boolean isParametrizable(DataType type, Annotation[] annotations)
+    private static void checkParametrizable(DataType type)
     {
-        if (notParametrizableTypes.contains(type.getRawType()))
+        if (disallowedOperationParameterTypes.contains(type.getRawType()))
         {
-            return false;
+            throw new IllegalArgumentException(
+                    String.format("Type %s is not allowed as an operation parameter. Use dependency injection instead", type.getRawType().getName()));
         }
-
-        return !contains(annotations, Payload.class);
     }
 
     private static DataType adaptType(DataType type)

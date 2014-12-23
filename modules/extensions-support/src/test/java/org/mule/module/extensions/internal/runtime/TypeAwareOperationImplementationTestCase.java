@@ -64,7 +64,7 @@ public class TypeAwareOperationImplementationTestCase extends AbstractMuleTestCa
     }
 
     @Test
-    public void argLessOperationWithReturnValue() throws Exception
+    public void operationWithReturnValueAndWithoutParameters() throws Exception
     {
         Method method = ClassUtils.getMethod(HeisenbergOperations.class, "sayMyName", new Class<?>[] {});
         implementation = new TypeAwareOperationImplementation(HeisenbergOperations.class, method);
@@ -72,7 +72,7 @@ public class TypeAwareOperationImplementationTestCase extends AbstractMuleTestCa
     }
 
     @Test
-    public void voidArgLessOperation() throws Exception
+    public void voidOperationWithoutParameters() throws Exception
     {
         Method method = ClassUtils.getMethod(HeisenbergOperations.class, "die", new Class<?>[] {});
         implementation = new TypeAwareOperationImplementation(HeisenbergOperations.class, method);

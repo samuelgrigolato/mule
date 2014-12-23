@@ -58,4 +58,16 @@
         <heisenberg:hide-meth-in-message config-ref="heisenberg" />
     </flow>
 
+    <flow name="killFromPayload">
+        <heisenberg:kill config-ref="heisenberg" goodbyeMessage="#[flowVars['goodbye']]" />
+    </flow>
+    
+    <flow name="customKillWithDefault">
+        <heisenberg:kill-with-custom-message config-ref="heisenberg" goodbyeMessage="#[flowVars['goodbye']]" />
+    </flow>
+
+    <flow name="customKillWithoutDefault">
+        <heisenberg:kill-with-custom-message config-ref="heisenberg" goodbyeMessage="#[flowVars['goodbye']]" victim="#[flowVars['victim']]"/>
+    </flow>
+
 </mule>

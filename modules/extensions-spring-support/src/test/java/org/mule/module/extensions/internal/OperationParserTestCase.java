@@ -11,6 +11,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mule.module.extensions.HealthStatus.DEAD;
 import org.mule.api.MuleEvent;
+import org.mule.api.MuleException;
 import org.mule.api.MuleMessage;
 import org.mule.extensions.introspection.Describer;
 import org.mule.module.extensions.HeisenbergExtension;
@@ -27,6 +28,8 @@ public class OperationParserTestCase extends ExtensionsFunctionalTestCase
     private static final String GUSTAVO_FRING = "Gustavo Fring";
     private static final String SECRET_PACKAGE = "secretPackage";
     private static final String METH = "meth";
+    private static final String GOODBYE_MESSAGE = "Say hello to my little friend";
+    private static final String VICTIM = "Skyler";
 
     @Override
     protected Describer[] getManagedDescribers()
@@ -50,13 +53,13 @@ public class OperationParserTestCase extends ExtensionsFunctionalTestCase
     }
 
     @Test
-    public void argLessOperationWithReturnValue() throws Exception
+    public void operationWithReturnValueAndWithoutParameters() throws Exception
     {
         runFlowAndExpect("sayMyName", "Heisenberg");
     }
 
     @Test
-    public void voidArgLessOperation() throws Exception
+    public void voidOperationWithoutParameters() throws Exception
     {
         MuleEvent originalEvent = getTestEvent(EMPTY);
         MuleEvent responseEvent = runFlow("die", originalEvent);
@@ -65,19 +68,19 @@ public class OperationParserTestCase extends ExtensionsFunctionalTestCase
     }
 
     @Test
-    public void getFixedEnemy() throws Exception
+    public void operationWithFixedParameter() throws Exception
     {
         runFlowAndExpect("getFixedEnemy", GUSTAVO_FRING);
     }
 
     @Test
-    public void getExpressionEnemy() throws Exception
+    public void operationWithDynamicParameter() throws Exception
     {
         doTestExpressionEnemy(0);
     }
 
     @Test
-    public void getExpressionEnemyWithParamTransformation() throws Exception
+    public void operationWithTransformedParameter() throws Exception
     {
         doTestExpressionEnemy("0");
     }
@@ -99,6 +102,41 @@ public class OperationParserTestCase extends ExtensionsFunctionalTestCase
         HeisenbergOperations.messageHolder.set(message);
         runFlow("hideInMessage", getTestEvent(EMPTY));
         assertThat((String) message.getInvocationProperty(SECRET_PACKAGE), is(METH));
+    }
+
+    @Test
+    public void parameterFixedAtPayload() throws Exception
+    {
+        assertKillByPayload("killFromPayload");
+    }
+
+    @Test
+    public void optionalParameterDefaultingToPayload() throws Exception
+    {
+        assertKillByPayload("customKillWithDefault");
+    }
+
+    @Test
+    public void optionalParameterWithDefaultOverride() throws Exception
+    {
+        MuleEvent event = getTestEvent("");
+        event.setFlowVariable("goodbye", GOODBYE_MESSAGE);
+        event.setFlowVariable("victim", VICTIM);
+        event = runFlow("customKillWithoutDefault", event);
+        assertKillPayload(event);
+    }
+
+    private void assertKillPayload(MuleEvent event) throws MuleException
+    {
+        assertThat(event.getMessageAsString(), is(String.format("%s, %s", GOODBYE_MESSAGE, VICTIM)));
+    }
+
+    private void assertKillByPayload(String flowName) throws Exception
+    {
+        MuleEvent event = getTestEvent(VICTIM);
+        event.setFlowVariable("goodbye", GOODBYE_MESSAGE);
+        event = runFlow(flowName, event);
+        assertKillPayload(event);
     }
 
     private void doTestExpressionEnemy(Object enemyIndex) throws Exception

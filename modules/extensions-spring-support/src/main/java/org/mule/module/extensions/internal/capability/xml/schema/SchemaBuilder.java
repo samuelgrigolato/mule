@@ -19,6 +19,7 @@ import org.mule.extensions.introspection.DataType;
 import org.mule.extensions.introspection.Extension;
 import org.mule.extensions.introspection.Operation;
 import org.mule.extensions.introspection.Parameter;
+import org.mule.module.extensions.internal.capability.HiddenCapability;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Annotation;
 import org.mule.module.extensions.internal.capability.xml.schema.model.Attribute;
 import org.mule.module.extensions.internal.capability.xml.schema.model.ComplexContent;
@@ -60,6 +61,8 @@ import java.util.Set;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
+
+import org.apache.commons.collections.CollectionUtils;
 
 /**
  * Builder class to generate a XSD schema that describes a
@@ -563,6 +566,11 @@ public class SchemaBuilder
 
         for (final Parameter parameter : parameters)
         {
+            if (!CollectionUtils.isEmpty(parameter.getCapabilities(HiddenCapability.class)))
+            {
+                continue;
+            }
+
             DataType parameterType = parameter.getType();
             DataQualifier parameterQualifier = parameterType.getQualifier();
 

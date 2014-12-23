@@ -8,13 +8,21 @@ package org.mule.module.extensions.internal.introspection;
 
 import org.mule.extensions.introspection.DataType;
 
-class ParameterDescriptor
+/**
+ * Intermediate representation of a parameter used to decouple
+ * an interchangeable introspection mechanism from the extension's API
+ * model
+ *
+ * @since 3.7.0
+ */
+final class ParameterDescriptor
 {
 
     private String name;
     private DataType type;
     private boolean required;
     private Object defaultValue;
+    private boolean hidden = false;
 
     String getName()
     {
@@ -54,5 +62,15 @@ class ParameterDescriptor
     void setDefaultValue(Object defaultValue)
     {
         this.defaultValue = defaultValue;
+    }
+
+    boolean isHidden()
+    {
+        return hidden;
+    }
+
+    void setHidden(boolean hidden)
+    {
+        this.hidden = hidden;
     }
 }
