@@ -29,9 +29,13 @@
         <module>devkit-support</module>
         <module>drools</module>
         <module>extensions-support</module>
+
+        <!--launcher depends on it so it has to go
+        before it -->
+        <module>guice</module>
+
         <module>launcher</module>
         <module>client</module>
-        <module>guice</module>
         <module>http</module>
         <module>jaas</module>
         <module>jboss-transactions</module>

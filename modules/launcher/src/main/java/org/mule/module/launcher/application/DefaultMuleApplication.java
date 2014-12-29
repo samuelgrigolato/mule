@@ -7,6 +7,7 @@
 package org.mule.module.launcher.application;
 
 import static org.mule.util.SplashScreen.miniSplash;
+import org.mule.DefaultMuleContext;
 import org.mule.MuleServer;
 import org.mule.api.MuleContext;
 import org.mule.api.MuleException;
@@ -22,6 +23,7 @@ import org.mule.context.DefaultMuleContextFactory;
 import org.mule.context.notification.MuleContextNotification;
 import org.mule.context.notification.NotificationException;
 import org.mule.lifecycle.phases.NotInLifecyclePhase;
+import org.mule.module.guice.GuiceInjector;
 import org.mule.module.launcher.DeploymentInitException;
 import org.mule.module.launcher.DeploymentListener;
 import org.mule.module.launcher.DeploymentStartException;
@@ -35,6 +37,7 @@ import org.mule.module.launcher.artifact.MuleContextDeploymentListener;
 import org.mule.module.launcher.descriptor.ApplicationDescriptor;
 import org.mule.module.launcher.domain.Domain;
 import org.mule.module.reboot.MuleContainerBootstrapUtils;
+import org.mule.registry.Injector;
 import org.mule.util.ClassUtils;
 import org.mule.util.ExceptionUtils;
 
@@ -186,7 +189,17 @@ public class DefaultMuleApplication implements Application
                 }
 
                 ApplicationMuleContextBuilder applicationContextBuilder = new ApplicationMuleContextBuilder(descriptor);
-                setMuleContext(muleContextFactory.createMuleContext(builders, applicationContextBuilder));
+
+                MuleContext context = muleContextFactory.createMuleContext(builders, applicationContextBuilder);
+
+                if (context instanceof DefaultMuleContext)
+                {
+                    Injector injector = new GuiceInjector(context);
+                    injector.initialise();
+                    ((DefaultMuleContext) context).setRootInjector(injector);
+                }
+
+                setMuleContext(context);
             }
         }
         catch (Exception e)

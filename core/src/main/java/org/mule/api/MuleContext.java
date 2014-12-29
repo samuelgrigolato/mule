@@ -34,6 +34,7 @@ import org.mule.context.notification.ServerNotificationManager;
 import org.mule.extensions.ExtensionsManager;
 import org.mule.management.stats.AllStatistics;
 import org.mule.management.stats.ProcessingTimeWatcher;
+import org.mule.registry.Injector;
 import org.mule.util.lock.LockFactory;
 import org.mule.util.queue.QueueManager;
 
@@ -189,6 +190,12 @@ public interface MuleContext extends Lifecycle
     
     ObjectStoreManager getObjectStoreManager();
 
+    /**
+     * Gets the {@link ExtensionsManager} used by mule for
+     * discovering, managing and supporting extensions
+     *
+     * @since 3.7.0
+     */
     ExtensionsManager getExtensionsManager();
 
     AllStatistics getStatistics();
@@ -196,6 +203,15 @@ public interface MuleContext extends Lifecycle
     LifecycleManager getLifecycleManager();
 
     MuleRegistry getRegistry();
+
+    /**
+     * Gets the root {@link Injector} that can be used to inject
+     * dependencies registered in the {@link #getRegistry()} into any
+     * object
+     *
+     * @since 3.7.0
+     */
+    Injector getRootInjector();
 
     MuleConfiguration getConfiguration();
 

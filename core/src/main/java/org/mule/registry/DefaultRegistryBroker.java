@@ -9,8 +9,11 @@ package org.mule.registry;
 import org.mule.api.MuleContext;
 import org.mule.api.registry.Registry;
 
+import com.google.common.collect.ImmutableMap;
+
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class DefaultRegistryBroker extends AbstractRegistryBroker
@@ -25,16 +28,30 @@ public class DefaultRegistryBroker extends AbstractRegistryBroker
         registries.add(0, transientRegistry);
     }
 
+    @Override
+    public Map<String, Object> getAll()
+    {
+        ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
+        for (Registry registry : registries)
+        {
+            builder.putAll(registry.getAll());
+        }
+
+        return builder.build();
+    }
+
     TransientRegistry getTransientRegistry()
     {
         return transientRegistry;
     }
 
+    @Override
     public void addRegistry(Registry registry)
     {
         registries.add(1, registry);
     }
 
+    @Override
     public void removeRegistry(Registry registry)
     {
         registries.remove(registry);

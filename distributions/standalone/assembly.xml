@@ -148,6 +148,7 @@
                 <include>org.mule.modules:mule-module-db</include>
                 <include>org.mule.modules:mule-module-devkit-support</include>
                 <include>org.mule.modules:mule-module-drools</include>
+                <include>org.mule.modules:mule-module-guice</include>
                 <include>org.mule.modules:mule-module-http</include>
                 <include>org.mule.modules:mule-module-jaas</include>
                 <include>org.mule.modules:mule-module-jersey</include>

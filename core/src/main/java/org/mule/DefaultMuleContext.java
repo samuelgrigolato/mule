@@ -55,6 +55,7 @@ import org.mule.lifecycle.MuleContextLifecycleManager;
 import org.mule.management.stats.AllStatistics;
 import org.mule.management.stats.ProcessingTimeWatcher;
 import org.mule.registry.DefaultRegistryBroker;
+import org.mule.registry.Injector;
 import org.mule.registry.MuleRegistryHelper;
 import org.mule.transport.DefaultPollingController;
 import org.mule.transport.PollingController;
@@ -171,6 +172,8 @@ public class DefaultMuleContext implements MuleContext
 
     private ExtensionsManager extensionsManager;
 
+    private Injector rootInjector;
+
     /**
      * @deprecated Use empty constructor instead and use setter for dependencies.
      */
@@ -277,6 +280,11 @@ public class DefaultMuleContext implements MuleContext
 
         startDate = System.currentTimeMillis();
 
+        if (rootInjector != null)
+        {
+            rootInjector.start();
+        }
+
         fireNotification(new MuleContextNotification(this, MuleContextNotification.CONTEXT_STARTING));
         getLifecycleManager().fireLifecycle(Startable.PHASE_NAME);
         overridePollingController();
@@ -306,6 +314,12 @@ public class DefaultMuleContext implements MuleContext
         getLifecycleManager().checkPhase(Stoppable.PHASE_NAME);
         fireNotification(new MuleContextNotification(this, MuleContextNotification.CONTEXT_STOPPING));
         getLifecycleManager().fireLifecycle(Stoppable.PHASE_NAME);
+
+        if (rootInjector != null)
+        {
+            rootInjector.stop();
+        }
+
         fireNotification(new MuleContextNotification(this, MuleContextNotification.CONTEXT_STOPPED));
     }
 
@@ -330,6 +344,11 @@ public class DefaultMuleContext implements MuleContext
         try
         {
             getLifecycleManager().fireLifecycle(Disposable.PHASE_NAME);
+
+            if (rootInjector != null)
+            {
+                rootInjector.dispose();
+            }
 
             // THis is a little odd. I find the relationship between the MuleRegistry Helper and the registry broker, too much abstraction?
             muleRegistryHelper.dispose();
@@ -561,10 +580,22 @@ public class DefaultMuleContext implements MuleContext
         return queueManager;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExtensionsManager getExtensionsManager()
     {
         return extensionsManager;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Injector getRootInjector()
+    {
+        return rootInjector;
     }
 
     @Override
@@ -1011,5 +1042,10 @@ public class DefaultMuleContext implements MuleContext
     public void setExtensionsManager(ExtensionsManager extensionsManager)
     {
         this.extensionsManager = extensionsManager;
+    }
+
+    public void setRootInjector(Injector rootInjector)
+    {
+        this.rootInjector = rootInjector;
     }
 }

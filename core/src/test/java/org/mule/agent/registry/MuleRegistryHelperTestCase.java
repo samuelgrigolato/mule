@@ -6,16 +6,19 @@
  */
 package org.mule.agent.registry;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
+import static org.mule.api.config.MuleProperties.OBJECT_STORE_MANAGER;
 import org.mule.api.MuleException;
-import org.mule.api.registry.MuleRegistry;
 import org.mule.api.schedule.Scheduler;
+import org.mule.api.store.ObjectStoreManager;
 import org.mule.api.transformer.Transformer;
 import org.mule.tck.junit4.AbstractMuleContextTestCase;
 import org.mule.tck.testmodels.fruit.BloodOrange;
@@ -27,6 +30,7 @@ import org.mule.transformer.types.SimpleDataType;
 import org.mule.util.Predicate;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -54,6 +58,19 @@ public class MuleRegistryHelperTestCase extends AbstractMuleContextTestCase
         assertEquals(2, trans.size());
         assertTrue(trans.contains(t1));
         assertTrue(trans.contains(t2));
+    }
+
+    @Test
+    public void getAll() throws Exception
+    {
+        Map<String, Object> all = muleContext.getRegistry().getAll();
+        assertThat(all.isEmpty(), is(false));
+
+        // it doesn't make sense to couple the test with
+        // a fixed number of entries and asserting them all
+        // so we'll just look for one that it's safe to assume
+        // will never go away and take that as a valid sample
+        assertThat(all.get(OBJECT_STORE_MANAGER), is(instanceOf(ObjectStoreManager.class)));
     }
 
     @Test

@@ -27,6 +27,8 @@ import org.mule.util.CollectionUtils;
 import org.mule.util.ExceptionUtils;
 import org.mule.util.StringUtils;
 
+import com.google.common.collect.ImmutableMap;
+
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -40,7 +42,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.functors.InstanceofPredicate;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
 
 /**
  * Use the registryLock when reading/writing/iterating over the contents of the registry hashmap.
@@ -156,6 +158,7 @@ public class TransientRegistry extends AbstractRegistry
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public <T> Map<String, T> lookupByType(Class<T> type)
     {
         final Map<String, T> results = new HashMap<String, T>();
@@ -180,11 +183,14 @@ public class TransientRegistry extends AbstractRegistry
         return results;
     }
 
+
+    @Override
     public <T> T lookupObject(String key)
     {
         return registryMap.<T>get(key);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public <T> Collection<T> lookupObjects(Class<T> returntype)
     {
@@ -255,14 +261,22 @@ public class TransientRegistry extends AbstractRegistry
      * @param key
      * @param value
      */
+    @Override
     public void registerObject(String key, Object value) throws RegistrationException
     {
         registerObject(key, value, Object.class);
     }
 
+    @Override
+    public Map<String, Object> getAll()
+    {
+        return registryMap.getAll();
+    }
+
     /**
      * Allows for arbitrary registration of transient objects
      */
+    @Override
     public void registerObject(String key, Object object, Object metadata) throws RegistrationException
     {
         checkDisposed();
@@ -324,6 +338,7 @@ public class TransientRegistry extends AbstractRegistry
      * @throws RegistrationException if there is a problem unregistering the object. Typically this will be because
      *                               the object's lifecycle threw an exception
      */
+    @Override
     public void unregisterObject(String key, Object metadata) throws RegistrationException
     {
         Object obj = registryMap.remove(key);
@@ -342,6 +357,7 @@ public class TransientRegistry extends AbstractRegistry
 
     }
 
+    @Override
     public void unregisterObject(String key) throws RegistrationException
     {
         unregisterObject(key, Object.class);
@@ -351,11 +367,13 @@ public class TransientRegistry extends AbstractRegistry
     // Registry Metadata
     // /////////////////////////////////////////////////////////////////////////
 
+    @Override
     public boolean isReadOnly()
     {
         return false;
     }
 
+    @Override
     public boolean isRemote()
     {
         return false;
@@ -385,9 +403,9 @@ public class TransientRegistry extends AbstractRegistry
             }
         });
 
-        private Log logger;
+        private Logger logger;
 
-        public RegistryMap(Log log)
+        public RegistryMap(Logger log)
         {
             super();
             logger = log;
@@ -467,6 +485,20 @@ public class TransientRegistry extends AbstractRegistry
             {
                 readLock.lock();
                 return (T) registry.get(key);
+            }
+            finally
+            {
+                readLock.unlock();
+            }
+        }
+
+        Map<String, Object> getAll()
+        {
+            Lock readLock = registryLock.readLock();
+            readLock.lock();
+            try
+            {
+                return ImmutableMap.copyOf(registry);
             }
             finally
             {

@@ -14,6 +14,7 @@ import org.mule.api.registry.Registry;
 import org.mule.registry.AbstractRegistryTestCase;
 
 import java.util.Collection;
+import java.util.Map;
 
 import org.hamcrest.core.Is;
 import org.junit.Test;
@@ -44,6 +45,16 @@ public class SpringRegistryTestCase extends AbstractRegistryTestCase
         parentApplicationContext.registerSingleton(ANOTHER_BEAN_KEY, String.class);
         Collection<String> values = springRegistry.lookupObjects(String.class);
         assertThat(values.size(), is(2));
+    }
+
+    @Test
+    public void getAll() {
+        lookupByTypeSearchInParentAlso();
+        Map<String, Object> all = springRegistry.getAll();
+        assertThat(all.size(), is(3));
+        assertThat(all.keySet().contains(BEAN_KEY), is(true));
+        assertThat(all.keySet().contains(ANOTHER_BEAN_KEY), is(true));
+        assertThat(all.keySet().contains("messageSource"), is(true));
     }
 
     @Test

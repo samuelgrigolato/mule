@@ -9,7 +9,6 @@ package org.mule.api.registry;
 import org.mule.api.lifecycle.Disposable;
 import org.mule.api.lifecycle.Initialisable;
 import org.mule.api.lifecycle.LifecycleException;
-import org.mule.api.transport.Connector;
 
 import java.util.Collection;
 import java.util.Map;
@@ -69,6 +68,8 @@ public interface Registry extends Initialisable, Disposable
      * @return key/object pairs
      */
     <T> Map<String, T> lookupByType(Class<T> type);
+
+    Map<String, Object> getAll();
 
     // /////////////////////////////////////////////////////////////////////////
     // Registration methods

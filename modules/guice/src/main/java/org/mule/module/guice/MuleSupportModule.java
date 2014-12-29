@@ -7,31 +7,18 @@
 package org.mule.module.guice;
 
 import org.mule.api.MuleContext;
-import org.mule.api.MuleRuntimeException;
-import org.mule.api.NameableObject;
-import org.mule.api.agent.Agent;
 import org.mule.api.context.MuleContextAware;
-import org.mule.api.registry.RegistrationException;
-import org.mule.api.transport.Connector;
-import org.mule.config.i18n.CoreMessages;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.MembersInjector;
 import com.google.inject.TypeLiteral;
-import com.google.inject.internal.ProviderMethod;
 import com.google.inject.matcher.Matchers;
-import com.google.inject.name.Named;
-import com.google.inject.spi.InjectionListener;
 import com.google.inject.spi.TypeEncounter;
 import com.google.inject.spi.TypeListener;
 
-/**
- * @deprecated Guice module is deprecated and will be removed in Mule 4.
- */
-@Deprecated
-public class MuleSupportModule extends AbstractModule
+final class MuleSupportModule extends AbstractModule
 {
-    protected MuleContext muleContext;
+    private MuleContext muleContext;
 
     public MuleSupportModule(MuleContext muleContext)
     {
@@ -48,15 +35,15 @@ public class MuleSupportModule extends AbstractModule
             {
                 //iTypeEncounter.register(new MuleRegistryInjectionLister());
                 iTypeEncounter.register(new MuleContextAwareInjector<I>());
-                iTypeEncounter.register(new MuleBindInjector<I>());
             }
         });
         bind(MuleContext.class).toInstance(muleContext);
     }
 
 
-    class MuleContextAwareInjector<I> implements MembersInjector<I>
+    private class MuleContextAwareInjector<I> implements MembersInjector<I>
     {
+        @Override
         public void injectMembers(I o)
         {
             if(o instanceof MuleContextAware)
@@ -65,40 +52,4 @@ public class MuleSupportModule extends AbstractModule
             }
         }
     }
-
-    class MuleBindInjector<I> implements InjectionListener<I>
-    {
-        public void afterInjection(I i)
-        {
-            if(i instanceof ProviderMethod)
-            {
-                Class type = ((ProviderMethod)i).getKey().getTypeLiteral().getRawType();
-                boolean bindRequired = (type.equals(Connector.class) || type.equals(Agent.class));
-
-                Named bindTo = ((ProviderMethod)i).getMethod().getAnnotation(Named.class);
-                if(bindTo!=null)
-                {
-                    try
-                    {
-                        Object o = ((ProviderMethod)i).get();
-                        if(o instanceof NameableObject)
-                        {
-                            ((NameableObject)o).setName(bindTo.value());
-                        }
-                        muleContext.getRegistry().registerObject(bindTo.value(), o);
-                    }
-                    catch (RegistrationException e)
-                    {
-                        throw new MuleRuntimeException(CoreMessages.createStaticMessage("failed to bind " + bindTo.value()));
-                    }
-                }
-                else if(bindRequired)
-                {
-                    throw new RuntimeException("Provider object type: " + type + ", must have a @Named annotation so that the object can be bound in Mule");
-                }
-            }
-        }
-    }
-
-    
 }

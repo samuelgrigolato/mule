@@ -15,6 +15,8 @@ import org.mule.lifecycle.RegistryLifecycleManager;
 import org.mule.registry.AbstractRegistry;
 import org.mule.util.StringUtils;
 
+import com.google.common.collect.ImmutableMap;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -123,9 +125,7 @@ public class SpringRegistry extends AbstractRegistry
     {
         if (StringUtils.isBlank(key))
         {
-            logger.warn(
-                    MessageFactory.createStaticMessage("Detected a lookup attempt with an empty or null key"),
-                    new Throwable().fillInStackTrace());
+            logger.warn("Detected a lookup attempt with an empty or null key", new Throwable().fillInStackTrace());
             return null;
         }
 
@@ -141,7 +141,10 @@ public class SpringRegistry extends AbstractRegistry
             }
             catch (NoSuchBeanDefinitionException e)
             {
-                logger.debug(e);
+                if (logger.isDebugEnabled())
+                {
+                    logger.debug("Could not find bean for key " + key, e);
+                }
                 return null;
             }
         }
@@ -174,6 +177,18 @@ public class SpringRegistry extends AbstractRegistry
         return internalLookupByType(type, true, true);
     }
 
+    @Override
+    public Map<String, Object> getAll()
+    {
+        ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
+        for (String name : BeanFactoryUtils.beanNamesIncludingAncestors(applicationContext))
+        {
+            builder.put(name, applicationContext.getBean(name));
+        }
+
+        return builder.build();
+    }
+
     protected <T> Map<String, T> internalLookupByType(Class<T> type, boolean nonSingletons, boolean eagerInit)
     {
         try
@@ -188,7 +203,10 @@ public class SpringRegistry extends AbstractRegistry
         }
         catch (Exception e)
         {
-            logger.debug(e);
+            if (logger.isDebugEnabled())
+            {
+                logger.debug("Could not find beans for type " + type.getName(), e);
+            }
             return Collections.emptyMap();
         }
     }
@@ -207,7 +225,10 @@ public class SpringRegistry extends AbstractRegistry
         }
         catch (Exception e)
         {
-            logger.debug(e);
+            if (logger.isDebugEnabled())
+            {
+                logger.debug("Could not find beans for type " + type.getName(), e);
+            }
             return Collections.emptyMap();
         }
     }

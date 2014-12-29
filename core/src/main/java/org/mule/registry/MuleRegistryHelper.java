@@ -104,6 +104,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public void initialise() throws InitialisationException
     {
         //no-op
@@ -115,12 +116,14 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public void dispose()
     {
         transformerListCache.clear();
         exactTransformerCache.clear();
     }
 
+    @Override
     public void fireLifecycle(String phase) throws LifecycleException
     {
         if (Initialisable.PHASE_NAME.equals(phase))
@@ -140,6 +143,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public Connector lookupConnector(String name)
     {
         return (Connector) registry.lookupObject(name);
@@ -179,6 +183,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public EndpointBuilder lookupEndpointBuilder(String name)
     {
         Object o = registry.lookupObject(name);
@@ -197,6 +202,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public EndpointFactory lookupEndpointFactory()
     {
         return (EndpointFactory) registry.lookupObject(MuleProperties.OBJECT_MULE_ENDPOINT_FACTORY);
@@ -205,9 +211,16 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public Transformer lookupTransformer(String name)
     {
         return (Transformer) registry.lookupObject(name);
+    }
+
+    @Override
+    public Map<String, Object> getAll()
+    {
+        return registry.getAll();
     }
 
     /**
@@ -218,6 +231,7 @@ public class MuleRegistryHelper implements MuleRegistry
      *             directly
      */
     @Deprecated
+    @Override
     public Transformer lookupTransformer(Class inputType, Class outputType) throws TransformerException
     {
         return lookupTransformer(new SimpleDataType(inputType), new SimpleDataType(outputType));
@@ -231,6 +245,7 @@ public class MuleRegistryHelper implements MuleRegistry
      *             directly
      */
     @Deprecated
+    @Override
     public List<Transformer> lookupTransformers(Class input, Class output)
     {
         return lookupTransformers(new SimpleDataType(input), new SimpleDataType(output));
@@ -239,6 +254,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public Transformer lookupTransformer(DataType source, DataType result) throws TransformerException
     {
         final String dataTypePairHash = getDataTypeSourceResultPairHash(source, result);
@@ -303,6 +319,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public List<Transformer> lookupTransformers(DataType source, DataType result)
     {
         final String dataTypePairHash = getDataTypeSourceResultPairHash(source, result);
@@ -355,6 +372,7 @@ public class MuleRegistryHelper implements MuleRegistry
      * {@inheritDoc}
      */
     @Deprecated
+    @Override
     public Model lookupModel(String name)
     {
         return (Model) registry.lookupObject(name);
@@ -364,6 +382,7 @@ public class MuleRegistryHelper implements MuleRegistry
      * {@inheritDoc}
      */
     @Deprecated
+    @Override
     public Model lookupSystemModel()
     {
         return lookupModel(MuleProperties.OBJECT_SYSTEM_MODEL);
@@ -373,6 +392,7 @@ public class MuleRegistryHelper implements MuleRegistry
      * {@inheritDoc}
      */
     @Deprecated
+    @Override
     public Collection<Model> getModels()
     {
         return registry.lookupObjects(Model.class);
@@ -381,6 +401,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public Collection<Connector> getConnectors()
     {
         return registry.lookupObjects(Connector.class);
@@ -389,6 +410,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public Collection<Agent> getAgents()
     {
         return registry.lookupObjects(Agent.class);
@@ -397,6 +419,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public Collection<ImmutableEndpoint> getEndpoints()
     {
         return registry.lookupObjects(ImmutableEndpoint.class);
@@ -405,6 +428,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public Collection<Transformer> getTransformers()
     {
         return registry.lookupObjects(Transformer.class);
@@ -413,6 +437,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public Agent lookupAgent(String name)
     {
         return (Agent) registry.lookupObject(name);
@@ -421,6 +446,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public Service lookupService(String name)
     {
         return (Service) registry.lookupObject(name);
@@ -429,6 +455,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public Collection<Service> lookupServices()
     {
         return lookupObjects(Service.class);
@@ -437,6 +464,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public Collection<Service> lookupServices(String model)
     {
         Collection<Service> services = lookupServices();
@@ -457,6 +485,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public FlowConstruct lookupFlowConstruct(String name)
     {
         return (FlowConstruct) registry.lookupObject(name);
@@ -465,6 +494,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public Collection<FlowConstruct> lookupFlowConstructs()
     {
         return lookupObjects(FlowConstruct.class);
@@ -473,6 +503,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public final void registerTransformer(Transformer transformer) throws MuleException
     {
         registerObject(getName(transformer), transformer, Transformer.class);
@@ -523,6 +554,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * Looks up the service descriptor from a singleton cache and creates a new one if not found.
      */
+    @Override
     public ServiceDescriptor lookupServiceDescriptor(ServiceType type, String name, Properties overrides) throws ServiceException
     {
         String key = new AbstractServiceDescriptor.Key(name, overrides).getKey();
@@ -570,6 +602,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public void registerAgent(Agent agent) throws MuleException
     {
         registry.registerObject(getName(agent), agent, Agent.class);
@@ -578,6 +611,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public void registerConnector(Connector connector) throws MuleException
     {
         registry.registerObject(getName(connector), connector, Connector.class);
@@ -586,6 +620,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public void registerEndpoint(ImmutableEndpoint endpoint) throws MuleException
     {
         registry.registerObject(getName(endpoint), endpoint, ImmutableEndpoint.class);
@@ -594,6 +629,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public void registerEndpointBuilder(String name, EndpointBuilder builder) throws MuleException
     {
         registry.registerObject(name, builder, EndpointBuilder.class);
@@ -611,6 +647,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public void registerService(Service service) throws MuleException
     {
         registry.registerObject(getName(service), service, Service.class);
@@ -619,6 +656,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public void unregisterService(String serviceName) throws MuleException
     {
         registry.unregisterObject(serviceName, Service.class);
@@ -627,6 +665,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public void registerFlowConstruct(FlowConstruct flowConstruct) throws MuleException
     {
         registry.registerObject(getName(flowConstruct), flowConstruct, FlowConstruct.class);
@@ -635,6 +674,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public void unregisterFlowConstruct(String flowConstructName) throws MuleException
     {
         registry.unregisterObject(flowConstructName, FlowConstruct.class);
@@ -643,6 +683,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public void unregisterAgent(String agentName) throws MuleException
     {
         registry.unregisterObject(agentName, Agent.class);
@@ -679,6 +720,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public void unregisterConnector(String connectorName) throws MuleException
     {
         registry.unregisterObject(connectorName, Connector.class);
@@ -687,6 +729,7 @@ public class MuleRegistryHelper implements MuleRegistry
     /**
      * {@inheritDoc}
      */
+    @Override
     public void unregisterEndpoint(String endpointName) throws MuleException
     {
         registry.unregisterObject(endpointName, ImmutableEndpoint.class);
