@@ -10,7 +10,6 @@ import static org.mule.util.Preconditions.checkArgument;
 import org.mule.extensions.introspection.Parameter;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -115,7 +114,7 @@ public class ResolverSetResult
 
     public Map<Parameter, Object> asMap()
     {
-        return ImmutableMap.copyOf(evaluationResult);
+        return Collections.unmodifiableMap(evaluationResult);
     }
 
     /**

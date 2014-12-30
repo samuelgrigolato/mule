@@ -126,6 +126,28 @@ public class OperationParserTestCase extends ExtensionsFunctionalTestCase
         assertKillPayload(event);
     }
 
+    @Test
+    public void oneNestedOperation() throws Exception
+    {
+        MuleEvent event = runFlow("killOne");
+        String expected = "Killed the following because I'm the one who knocks:\n" +
+                          "bye bye, Gustavo Fring\n";
+
+        assertThat(expected, is(event.getMessageAsString()));
+    }
+
+    @Test
+    public void manyNestedOperations() throws Exception
+    {
+        MuleEvent event = runFlow("killMany");
+        String expected = "Killed the following because I'm the one who knocks:\n" +
+                          "bye bye, Gustavo Fring\n" +
+                          "bye bye, Frank\n" +
+                          "bye bye, Nazi dudes\n";
+
+        assertThat(expected, is(event.getMessageAsString()));
+    }
+
     private void assertKillPayload(MuleEvent event) throws MuleException
     {
         assertThat(event.getMessageAsString(), is(String.format("%s, %s", GOODBYE_MESSAGE, VICTIM)));

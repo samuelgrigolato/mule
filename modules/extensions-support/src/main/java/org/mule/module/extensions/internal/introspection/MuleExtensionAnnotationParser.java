@@ -16,7 +16,6 @@ import static org.reflections.ReflectionUtils.withName;
 import static org.reflections.ReflectionUtils.withParameters;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleMessage;
-import org.mule.api.NestedProcessor;
 import org.mule.extensions.annotations.Configurable;
 import org.mule.extensions.annotations.Extension;
 import org.mule.extensions.annotations.param.Optional;
@@ -47,6 +46,12 @@ import java.util.Set;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 
+/**
+ * Utilities for reading annotations as a mean to
+ * describe extensions
+ *
+ * @since 3.7.0
+ */
 public final class MuleExtensionAnnotationParser
 {
 
@@ -121,7 +126,7 @@ public final class MuleExtensionAnnotationParser
         {
             checkParametrizable(parameterTypes[i]);
 
-            DataType dataType = adaptType(parameterTypes[i]);
+            DataType dataType = parameterTypes[i];
 
             ParameterDescriptor parameter = new ParameterDescriptor();
             parameter.setName(paramNames[i]);
@@ -180,17 +185,6 @@ public final class MuleExtensionAnnotationParser
                     String.format("Type %s is not allowed as an operation parameter. Use dependency injection instead", type.getRawType().getName()));
         }
     }
-
-    private static DataType adaptType(DataType type)
-    {
-        if (NestedProcessor.class.equals(type.getRawType()))
-        {
-            return DataType.of(Operation.class);
-        }
-
-        return type;
-    }
-
 
     private static <T extends Annotation> boolean contains(Annotation[] annotations, Class<T> annotationType)
     {

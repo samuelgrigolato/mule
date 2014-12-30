@@ -10,32 +10,46 @@ import static org.mule.module.extensions.internal.config.XmlExtensionParserUtils
 import org.mule.api.MuleContext;
 import org.mule.api.context.MuleContextAware;
 import org.mule.api.lifecycle.LifecycleUtils;
+import org.mule.api.processor.MessageProcessor;
 import org.mule.extensions.introspection.Operation;
 import org.mule.module.extensions.internal.runtime.processor.OperationMessageProcessor;
 import org.mule.module.extensions.internal.runtime.resolver.ResolverSet;
 import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
 
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.FactoryBean;
 
+/**
+ * A {@link FactoryBean} which yields instances of {@link OperationMessageProcessor}
+ *
+ * @since 3.7.0
+ */
 public class OperationFactoryBean implements FactoryBean<OperationMessageProcessor>, MuleContextAware
 {
 
     private final ValueResolver<Object> configurationValueResolver;
     private final Operation operation;
     private final ElementDescriptor element;
+    private final Map<String, List<MessageProcessor>> nestedOperations;
     private MuleContext muleContext;
 
-    public OperationFactoryBean(ValueResolver<Object> configurationValueResolver, Operation operation, ElementDescriptor element)
+    public OperationFactoryBean(ValueResolver<Object> configurationValueResolver,
+                                Operation operation,
+                                ElementDescriptor element,
+                                Map<String, List<MessageProcessor>> nestedOperations)
     {
         this.configurationValueResolver = configurationValueResolver;
         this.operation = operation;
         this.element = element;
+        this.nestedOperations = nestedOperations;
     }
 
     @Override
     public OperationMessageProcessor getObject() throws Exception
     {
-        ResolverSet resolverSet = getResolverSet(element, operation.getParameters());
+        ResolverSet resolverSet = getResolverSet(element, operation.getParameters(), nestedOperations);
         LifecycleUtils.initialiseIfNeeded(resolverSet, muleContext);
         return new OperationMessageProcessor(configurationValueResolver, operation, resolverSet);
     }

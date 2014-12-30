@@ -16,10 +16,12 @@ import static org.reflections.ReflectionUtils.withParameters;
 import static org.reflections.ReflectionUtils.withParametersCount;
 import static org.reflections.ReflectionUtils.withPrefix;
 import static org.reflections.ReflectionUtils.withReturnType;
+import org.mule.api.NestedProcessor;
 import org.mule.extensions.annotations.Configurable;
 import org.mule.extensions.annotations.param.Ignore;
 import org.mule.extensions.annotations.param.Optional;
 import org.mule.extensions.introspection.DataType;
+import org.mule.extensions.introspection.Operation;
 import org.mule.extensions.introspection.Parameter;
 import org.mule.repackaged.internal.org.springframework.core.ResolvableType;
 import org.mule.util.ArrayUtils;
@@ -33,6 +35,7 @@ import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -198,7 +201,28 @@ public class IntrospectionUtils
 
     private static DataType toDataType(ResolvableType type)
     {
-        return DataType.of(type.getRawClass(), toRawTypes(type.getGenerics()));
+        Class<?> rawClass = type.getRawClass();
+        ResolvableType[] generics = type.getGenerics();
+
+        if (isOperation(rawClass))
+        {
+            return DataType.of(Operation.class);
+        }
+
+        if (List.class.isAssignableFrom(rawClass))
+        {
+            if (!ArrayUtils.isEmpty(generics) && isOperation(generics[0].getRawClass()))
+            {
+                return DataType.of(rawClass, Operation.class);
+            }
+        }
+
+        return DataType.of(rawClass, toRawTypes(generics));
+    }
+
+    private static boolean isOperation(Class<?> rawClass)
+    {
+        return NestedProcessor.class.isAssignableFrom(rawClass);
     }
 
     private static Class<?>[] toRawTypes(ResolvableType[] resolvableTypes)

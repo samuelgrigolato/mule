@@ -122,7 +122,7 @@ public final class DefaultExtensionFactory implements ExtensionFactory
 
     private Operation toOperation(OperationDeclaration declaration)
     {
-        List<Parameter> parameters = toOperationParameters(declaration.getParameters(), declaration);
+        List<Parameter> parameters = toOperationParameters(declaration.getParameters());
         return new ImmutableOperation(declaration.getName(),
                                       declaration.getDescription(),
                                       declaration.getImplementation(),
@@ -139,7 +139,7 @@ public final class DefaultExtensionFactory implements ExtensionFactory
         return parameters;
     }
 
-    private List<Parameter> toOperationParameters(List<ParameterDeclaration> declarations, OperationDeclaration declaration)
+    private List<Parameter> toOperationParameters(List<ParameterDeclaration> declarations)
     {
         return toParameters(declarations);
     }

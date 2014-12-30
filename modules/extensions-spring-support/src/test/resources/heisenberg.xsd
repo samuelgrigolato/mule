@@ -138,7 +138,7 @@
                         <xs:documentation>Specify which configuration to use for this invocation.</xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
-                <xs:attribute type="mule:expressionLong" use="optional" name="index"></xs:attribute>
+                <xs:attribute type="mule:expressionLong" use="required" name="index"></xs:attribute>
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
@@ -175,7 +175,47 @@
                         <xs:documentation>Specify which configuration to use for this invocation.</xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
-                <xs:attribute type="mule:expressionString" use="optional" name="goodbyeMessage"></xs:attribute>
+                <xs:attribute type="mule:expressionString" use="required" name="goodbyeMessage"></xs:attribute>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+    <xs:element xmlns="http://www.mulesoft.org/schema/mule/extension/heisenberg" xmlns:mule="http://www.mulesoft.org/schema/mule/core" type="KillManyType" substitutionGroup="mule:abstract-message-processor" name="kill-many"></xs:element>
+    <xs:complexType name="KillManyType">
+        <xs:complexContent>
+            <xs:extension xmlns:mule="http://www.mulesoft.org/schema/mule/core" base="mule:abstractMessageProcessorType">
+                <xs:sequence>
+                    <xs:element minOccurs="1" name="kill-operations">
+                        <xs:complexType>
+                            <xs:group minOccurs="1" maxOccurs="unbounded" ref="mule:messageProcessorOrOutboundEndpoint"></xs:group>
+                        </xs:complexType>
+                    </xs:element>
+                </xs:sequence>
+                <xs:attribute type="mule:substitutableName" use="required" name="config-ref">
+                    <xs:annotation>
+                        <xs:documentation>Specify which configuration to use for this invocation.</xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <xs:attribute type="mule:expressionString" use="required" name="reason"></xs:attribute>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+    <xs:element xmlns="http://www.mulesoft.org/schema/mule/extension/heisenberg" xmlns:mule="http://www.mulesoft.org/schema/mule/core" type="KillOneType" substitutionGroup="mule:abstract-message-processor" name="kill-one"></xs:element>
+    <xs:complexType name="KillOneType">
+        <xs:complexContent>
+            <xs:extension xmlns:mule="http://www.mulesoft.org/schema/mule/core" base="mule:abstractMessageProcessorType">
+                <xs:sequence>
+                    <xs:element minOccurs="1" name="kill-operation">
+                        <xs:complexType>
+                            <xs:group minOccurs="1" maxOccurs="1" ref="mule:messageProcessorOrOutboundEndpoint"></xs:group>
+                        </xs:complexType>
+                    </xs:element>
+                </xs:sequence>
+                <xs:attribute type="mule:substitutableName" use="required" name="config-ref">
+                    <xs:annotation>
+                        <xs:documentation>Specify which configuration to use for this invocation.</xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <xs:attribute type="mule:expressionString" use="required" name="reason"></xs:attribute>
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
@@ -189,7 +229,7 @@
                     </xs:annotation>
                 </xs:attribute>
                 <xs:attribute type="mule:expressionString" use="optional" name="victim"></xs:attribute>
-                <xs:attribute type="mule:expressionString" use="optional" name="goodbyeMessage"></xs:attribute>
+                <xs:attribute type="mule:expressionString" use="required" name="goodbyeMessage"></xs:attribute>
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>

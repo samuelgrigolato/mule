@@ -9,10 +9,18 @@ package org.mule.module.extensions.internal.config;
 import static org.mule.module.extensions.internal.capability.xml.schema.model.SchemaConstants.ATTRIBUTE_NAME_CONFIG;
 import static org.mule.module.extensions.internal.config.XmlExtensionParserUtils.setNoRecurseOnDefinition;
 import static org.mule.module.extensions.internal.config.XmlExtensionParserUtils.toElementDescriptorBeanDefinition;
+import org.mule.api.processor.MessageProcessor;
+import org.mule.config.spring.factories.MessageProcessorChainFactoryBean;
 import org.mule.config.spring.factories.PollingMessageSourceFactoryBean;
 import org.mule.config.spring.util.SpringXMLUtils;
 import org.mule.enricher.MessageEnricher;
+import org.mule.extensions.introspection.DataQualifier;
+import org.mule.extensions.introspection.DataType;
 import org.mule.extensions.introspection.Operation;
+import org.mule.extensions.introspection.Parameter;
+import org.mule.module.extensions.internal.introspection.BaseDataQualifierVisitor;
+import org.mule.module.extensions.internal.util.NameUtils;
+import org.mule.util.ArrayUtils;
 
 import java.util.List;
 
@@ -23,11 +31,21 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.ManagedList;
+import org.springframework.beans.factory.support.ManagedMap;
 import org.springframework.beans.factory.xml.BeanDefinitionParser;
 import org.springframework.beans.factory.xml.ParserContext;
 import org.springframework.util.xml.DomUtils;
 import org.w3c.dom.Element;
 
+/**
+ * A {@link BeanDefinitionParser} to parse message processors
+ * which execute operations implemented through the extensions API.
+ * <p/>
+ * It defines an {@link OperationFactoryBean} which in turn builds
+ * the actual {@link MessageProcessor}
+ *
+ * @since 3.7.0
+ */
 final class OperationBeanDefinitionParser implements BeanDefinitionParser
 {
 
@@ -46,12 +64,44 @@ final class OperationBeanDefinitionParser implements BeanDefinitionParser
         parseConfigRef(element, builder);
         builder.addConstructorArgValue(operation);
         builder.addConstructorArgValue(toElementDescriptorBeanDefinition(element));
+        builder.addConstructorArgValue(parseNestedOperations(element, parserContext));
 
         BeanDefinition definition = builder.getBeanDefinition();
         setNoRecurseOnDefinition(definition);
         attachProcessorDefinition(parserContext, definition);
 
         return definition;
+    }
+
+    private ManagedMap<String, ManagedList<MessageProcessor>> parseNestedOperations(final Element element, final ParserContext parserContext)
+    {
+        final ManagedMap<String, ManagedList<MessageProcessor>> nestedOperations = new ManagedMap<>();
+
+        for (final Parameter parameter : operation.getParameters())
+        {
+            final DataType type = parameter.getType();
+            type.getQualifier().accept(new BaseDataQualifierVisitor()
+            {
+
+                @Override
+                public void onOperation()
+                {
+                    nestedOperations.put(parameter.getName(), parseNestedProcessor(element, parameter, parserContext));
+                }
+
+                @Override
+                public void onList()
+                {
+                    DataType[] generics = type.getGenericTypes();
+                    if (!ArrayUtils.isEmpty(generics) && generics[0].getQualifier() == DataQualifier.OPERATION)
+                    {
+                        nestedOperations.put(parameter.getName(), parseNestedProcessor(element, parameter, parserContext));
+                    }
+                }
+            });
+        }
+
+        return nestedOperations;
     }
 
     private void parseConfigRef(Element element, BeanDefinitionBuilder builder)
@@ -80,78 +130,22 @@ final class OperationBeanDefinitionParser implements BeanDefinitionParser
         }
     }
 
-    private BeanDefinition parseNestedProcessor(Element element, ParserContext parserContext, Class factory)
+    private ManagedList<MessageProcessor> parseNestedProcessor(Element element, Parameter parameter, ParserContext parserContext)
     {
-        BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(factory);
+        element = DomUtils.getChildElementByTagName(element, NameUtils.hyphenize(parameter.getName()));
+        BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(MessageProcessorChainFactoryBean.class);
         BeanDefinition beanDefinition = builder.getBeanDefinition();
-        parserContext.getRegistry().registerBeanDefinition(generateChildBeanName(element), beanDefinition);
-        element.setAttribute("name", generateChildBeanName(element));
-        builder.setSource(parserContext.extractSource(element));
+        String childBeanName = generateChildBeanName(element);
+        parserContext.getRegistry().registerBeanDefinition(childBeanName, beanDefinition);
+        element.setAttribute("name", childBeanName);
+
+        builder.getRawBeanDefinition().setSource(parserContext.extractSource(element));
         builder.setScope(BeanDefinition.SCOPE_SINGLETON);
-        List list = parserContext.getDelegate().parseListElement(element, builder.getBeanDefinition());
+
+        ManagedList<MessageProcessor> processors = (ManagedList<MessageProcessor>) parserContext.getDelegate().parseListElement(element, builder.getBeanDefinition());
         parserContext.getRegistry().removeBeanDefinition(generateChildBeanName(element));
-        return beanDefinition;
-    }
 
-    private List parseNestedProcessorAsList(Element element, ParserContext parserContext, Class factory)
-    {
-        BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(factory);
-        BeanDefinition beanDefinition = builder.getBeanDefinition();
-        parserContext.getRegistry().registerBeanDefinition(generateChildBeanName(element), beanDefinition);
-        element.setAttribute("name", generateChildBeanName(element));
-        builder.setSource(parserContext.extractSource(element));
-        builder.setScope(BeanDefinition.SCOPE_SINGLETON);
-        List list = parserContext.getDelegate().parseListElement(element, builder.getBeanDefinition());
-        parserContext.getRegistry().removeBeanDefinition(generateChildBeanName(element));
-        return list;
-    }
-
-    private void parseNestedProcessorAsListAndSetProperty(Element element,
-                                                          ParserContext parserContext,
-                                                          Class factory,
-                                                          BeanDefinitionBuilder builder,
-                                                          String propertyName)
-    {
-        builder.addPropertyValue(propertyName, parseNestedProcessorAsList(element, parserContext, factory));
-    }
-
-    private void parseNestedProcessorAndSetProperty(Element element,
-                                                    ParserContext parserContext,
-                                                    Class factory,
-                                                    BeanDefinitionBuilder builder,
-                                                    String propertyName)
-    {
-        builder.addPropertyValue(propertyName, parseNestedProcessor(element, parserContext, factory));
-    }
-
-    private void parseNestedProcessorAsListAndSetProperty(Element element,
-                                                          String childElementName,
-                                                          ParserContext parserContext,
-                                                          Class factory,
-                                                          BeanDefinitionBuilder builder,
-                                                          String propertyName)
-    {
-        Element childDomElement = DomUtils.getChildElementByTagName(element, childElementName);
-        if (childDomElement != null)
-        {
-            builder.addPropertyValue(propertyName,
-                                     parseNestedProcessorAsList(childDomElement, parserContext, factory));
-        }
-    }
-
-    private void parseNestedProcessorAndSetProperty(Element element,
-                                                    String childElementName,
-                                                    ParserContext parserContext,
-                                                    Class factory,
-                                                    BeanDefinitionBuilder builder,
-                                                    String propertyName)
-    {
-        Element childDomElement = DomUtils.getChildElementByTagName(element, childElementName);
-        if (childDomElement != null)
-        {
-            builder.addPropertyValue(propertyName,
-                                     parseNestedProcessor(childDomElement, parserContext, factory));
-        }
+        return processors;
     }
 
     private void attachProcessorDefinition(ParserContext parserContext, BeanDefinition definition)
@@ -180,8 +174,7 @@ final class OperationBeanDefinitionParser implements BeanDefinitionParser
                 {
                     propertyValues.addPropertyValue("messageProcessors", new ManagedList());
                 }
-                List listMessageProcessors = ((List) propertyValues.getPropertyValue("messageProcessors")
-                        .getValue());
+                List listMessageProcessors = ((List) propertyValues.getPropertyValue("messageProcessors").getValue());
                 listMessageProcessors.add(definition);
             }
         }

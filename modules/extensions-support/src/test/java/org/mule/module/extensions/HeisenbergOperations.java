@@ -8,11 +8,14 @@ package org.mule.module.extensions;
 
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleMessage;
+import org.mule.api.NestedProcessor;
 import org.mule.api.transport.PropertyScope;
 import org.mule.extensions.annotations.Operation;
 import org.mule.extensions.annotations.param.Optional;
 import org.mule.extensions.annotations.param.Payload;
 import org.mule.util.ValueHolder;
+
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -71,6 +74,27 @@ public class HeisenbergOperations
     public String killWithCustomMessage(@Optional(defaultValue = "#[payload]") String victim, String goodbyeMessage)
     {
         return String.format("%s, %s", goodbyeMessage, victim);
+    }
+
+    @Operation
+    public String killMany(List<NestedProcessor> killOperations, String reason) throws Exception
+    {
+        StringBuilder builder = new StringBuilder("Killed the following because " + reason + ":\n");
+        for (NestedProcessor processor : killOperations)
+        {
+            builder.append(processor.process()).append("\n");
+        }
+
+        return builder.toString();
+    }
+
+    @Operation
+    public String killOne(NestedProcessor killOperation, String reason) throws Exception
+    {
+        StringBuilder builder = new StringBuilder("Killed the following because " + reason + ":\n");
+        builder.append(killOperation.process()).append("\n");
+
+        return builder.toString();
     }
 
     @Operation

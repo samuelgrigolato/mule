@@ -26,7 +26,6 @@ import org.mule.extensions.annotations.Operations;
 import org.mule.extensions.annotations.capability.Xml;
 import org.mule.extensions.introspection.DataType;
 import org.mule.extensions.introspection.Describer;
-import org.mule.extensions.introspection.Operation;
 import org.mule.extensions.introspection.declaration.ConfigurationDeclaration;
 import org.mule.extensions.introspection.declaration.Construct;
 import org.mule.extensions.introspection.declaration.Declaration;
@@ -70,6 +69,9 @@ public class AnnotationsBasedDescriberTestCase extends AbstractMuleTestCase
     private static final String HIDE_METH_IN_EVENT_OPERATION = "hideMethInEvent";
     private static final String HIDE_METH_IN_MESSAGE_OPERATION = "hideMethInMessage";
     private static final String DIE = "die";
+    private static final String KILL_MANY = "killMany";
+    private static final String KILL_ONE = "killOne";
+
 
     private Describer describer;
 
@@ -164,7 +166,7 @@ public class AnnotationsBasedDescriberTestCase extends AbstractMuleTestCase
 
     private void assertTestModuleOperations(Declaration declaration) throws Exception
     {
-        assertThat(declaration.getOperations(), hasSize(7));
+        assertThat(declaration.getOperations(), hasSize(9));
         assertOperation(declaration, SAY_MY_NAME_OPERATION, "");
         assertOperation(declaration, GET_ENEMY_OPERATION, "");
         assertOperation(declaration, KILL_OPERATION, "");
@@ -172,6 +174,8 @@ public class AnnotationsBasedDescriberTestCase extends AbstractMuleTestCase
         assertOperation(declaration, HIDE_METH_IN_EVENT_OPERATION, "");
         assertOperation(declaration, HIDE_METH_IN_MESSAGE_OPERATION, "");
         assertOperation(declaration, DIE, "");
+        assertOperation(declaration, KILL_MANY, "");
+        assertOperation(declaration, KILL_ONE, "");
 
         OperationDeclaration operation = getOperation(declaration, SAY_MY_NAME_OPERATION);
         assertThat(operation, is(notNullValue()));
@@ -184,14 +188,15 @@ public class AnnotationsBasedDescriberTestCase extends AbstractMuleTestCase
 
         operation = getOperation(declaration, KILL_OPERATION);
         assertThat(operation, is(notNullValue()));
-        assertThat(operation.getParameters(), hasSize(1));
-        assertParameter(operation.getParameters(), "enemiesLookup", "", DataType.of(Operation.class), true, true, null);
+        assertThat(operation.getParameters(), hasSize(2));
+        assertParameter(operation.getParameters(), "victim", "", DataType.of(String.class), false, true, "#[payload]");
+        assertParameter(operation.getParameters(), "goodbyeMessage", "", DataType.of(String.class), true, true, null);
 
         operation = getOperation(declaration, KILL_CUSTOM_OPERATION);
         assertThat(operation, is(notNullValue()));
         assertThat(operation.getParameters(), hasSize(2));
-        assertParameter(operation.getParameters(), "goodbyeMessage", "", DataType.of(String.class), false, true, "#[payload]");
-        assertParameter(operation.getParameters(), "enemiesLookup", "", DataType.of(Operation.class), true, true, null);
+        assertParameter(operation.getParameters(), "victim", "", DataType.of(String.class), false, true, "#[payload]");
+        assertParameter(operation.getParameters(), "goodbyeMessage", "", DataType.of(String.class), true, true, null);
 
         operation = getOperation(declaration, HIDE_METH_IN_EVENT_OPERATION);
         assertThat(operation, is(notNullValue()));

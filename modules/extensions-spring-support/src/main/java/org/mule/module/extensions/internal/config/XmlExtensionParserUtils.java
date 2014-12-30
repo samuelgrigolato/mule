@@ -10,8 +10,10 @@ import static org.mule.module.extensions.internal.util.MuleExtensionUtils.isExpr
 import static org.mule.module.extensions.internal.util.NameUtils.getGlobalPojoTypeName;
 import static org.mule.module.extensions.internal.util.NameUtils.hyphenize;
 import static org.mule.module.extensions.internal.util.NameUtils.singularize;
+import org.mule.api.NestedProcessor;
 import org.mule.api.lifecycle.Disposable;
 import org.mule.api.lifecycle.Initialisable;
+import org.mule.api.processor.MessageProcessor;
 import org.mule.config.spring.MuleHierarchicalBeanDefinitionParserDelegate;
 import org.mule.config.spring.parsers.generic.AutoIdUtils;
 import org.mule.extensions.introspection.DataQualifierVisitor;
@@ -25,6 +27,7 @@ import org.mule.module.extensions.internal.runtime.ObjectBuilder;
 import org.mule.module.extensions.internal.runtime.resolver.CachingValueResolverWrapper;
 import org.mule.module.extensions.internal.runtime.resolver.CollectionValueResolver;
 import org.mule.module.extensions.internal.runtime.resolver.EvaluateAndTransformValueResolver;
+import org.mule.module.extensions.internal.runtime.resolver.NestedProcessorValueResolver;
 import org.mule.module.extensions.internal.runtime.resolver.ObjectBuilderValueResolver;
 import org.mule.module.extensions.internal.runtime.resolver.RegistryLookupValueResolver;
 import org.mule.module.extensions.internal.runtime.resolver.ResolverSet;
@@ -35,9 +38,12 @@ import org.mule.module.extensions.internal.util.NameUtils;
 import org.mule.util.TemplateParser;
 import org.mule.util.ValueHolder;
 
+import com.google.common.collect.ImmutableMap;
+
 import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -45,6 +51,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.ManagedList;
@@ -375,6 +382,12 @@ final class XmlExtensionParserUtils
             }
 
             @Override
+            public void onOperation()
+            {
+                super.onOperation();
+            }
+
+            @Override
             public void onPojo()
             {
                 resolverReference.set(parsePojo(element, fieldName, hyphenizedFieldName, dataType, defaultValue));
@@ -410,14 +423,46 @@ final class XmlExtensionParserUtils
 
     static ResolverSet getResolverSet(ElementDescriptor element, List<Parameter> parameters)
     {
+        return getResolverSet(element, parameters, ImmutableMap.<String, List<MessageProcessor>>of());
+    }
+
+    static ResolverSet getResolverSet(ElementDescriptor element, List<Parameter> parameters, Map<String, List<MessageProcessor>> nestedOperations)
+    {
         ResolverSet resolverSet = new ResolverSet();
 
         for (Parameter parameter : parameters)
         {
-            resolverSet.add(parameter, parseParameter(element, parameter));
+            List<MessageProcessor> nestedProcessors = nestedOperations.get(parameter.getName());
+            if (!CollectionUtils.isEmpty(nestedProcessors))
+            {
+                addNestedProcessorResolver(resolverSet, parameter, nestedProcessors);
+            }
+            else
+            {
+                ValueResolver<?> resolver = parseParameter(element, parameter);
+                resolverSet.add(parameter, resolver != null ? resolver : new StaticValueResolver(null));
+            }
         }
 
         return resolverSet;
+    }
+
+    private static void addNestedProcessorResolver(ResolverSet resolverSet, Parameter parameter, List<MessageProcessor> nestedProcessors)
+    {
+        if (nestedProcessors.size() == 1)
+        {
+            resolverSet.add(parameter, new NestedProcessorValueResolver(nestedProcessors.get(0)));
+        }
+        else
+        {
+            List<ValueResolver<NestedProcessor>> nestedProcessorResolvers = new ArrayList<>(nestedProcessors.size());
+            for (MessageProcessor nestedProcessor : nestedProcessors)
+            {
+                nestedProcessorResolvers.add(new NestedProcessorValueResolver(nestedProcessor));
+            }
+
+            resolverSet.add(parameter, CollectionValueResolver.of(ArrayList.class, nestedProcessorResolvers));
+        }
     }
 
     static void applyLifecycle(BeanDefinitionBuilder builder)

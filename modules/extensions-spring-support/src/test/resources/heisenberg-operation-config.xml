@@ -41,33 +41,52 @@
     <flow name="die">
         <heisenberg:die config-ref="heisenberg"/>
     </flow>
-    
+
     <flow name="getFixedEnemy">
         <heisenberg:get-enemy config-ref="heisenberg" index="0"/>
     </flow>
 
     <flow name="expressionEnemy">
-        <heisenberg:get-enemy config-ref="heisenberg" index="#[flowVars['enemy']]" />
+        <heisenberg:get-enemy config-ref="heisenberg" index="#[flowVars['enemy']]"/>
     </flow>
 
     <flow name="hideInEvent">
-        <heisenberg:hide-meth-in-event config-ref="heisenberg" />
+        <heisenberg:hide-meth-in-event config-ref="heisenberg"/>
     </flow>
 
     <flow name="hideInMessage">
-        <heisenberg:hide-meth-in-message config-ref="heisenberg" />
+        <heisenberg:hide-meth-in-message config-ref="heisenberg"/>
     </flow>
 
     <flow name="killFromPayload">
-        <heisenberg:kill config-ref="heisenberg" goodbyeMessage="#[flowVars['goodbye']]" />
+        <heisenberg:kill config-ref="heisenberg" goodbyeMessage="#[flowVars['goodbye']]"/>
     </flow>
-    
+
     <flow name="customKillWithDefault">
-        <heisenberg:kill-with-custom-message config-ref="heisenberg" goodbyeMessage="#[flowVars['goodbye']]" />
+        <heisenberg:kill-with-custom-message config-ref="heisenberg" goodbyeMessage="#[flowVars['goodbye']]"/>
     </flow>
 
     <flow name="customKillWithoutDefault">
-        <heisenberg:kill-with-custom-message config-ref="heisenberg" goodbyeMessage="#[flowVars['goodbye']]" victim="#[flowVars['victim']]"/>
+        <heisenberg:kill-with-custom-message config-ref="heisenberg" goodbyeMessage="#[flowVars['goodbye']]"
+                                             victim="#[flowVars['victim']]"/>
+    </flow>
+
+    <flow name="killMany">
+        <heisenberg:kill-many config-ref="heisenberg" reason="I'm the one who knocks">
+            <heisenberg:kill-operations>
+                <heisenberg:kill-with-custom-message config-ref="heisenberg" victim="Gustavo Fring" goodbyeMessage="bye bye"/>
+                <heisenberg:kill-with-custom-message config-ref="heisenberg" victim="Frank" goodbyeMessage="bye bye"/>
+                <heisenberg:kill-with-custom-message config-ref="heisenberg" victim="Nazi dudes" goodbyeMessage="bye bye"/>
+            </heisenberg:kill-operations>
+        </heisenberg:kill-many>
+    </flow>
+
+    <flow name="killOne">
+        <heisenberg:kill-one config-ref="heisenberg" reason="I'm the one who knocks">
+            <heisenberg:kill-operation>
+                <heisenberg:kill-with-custom-message config-ref="heisenberg" victim="Gustavo Fring" goodbyeMessage="bye bye"/>
+            </heisenberg:kill-operation>
+        </heisenberg:kill-one>
     </flow>
 
 </mule>

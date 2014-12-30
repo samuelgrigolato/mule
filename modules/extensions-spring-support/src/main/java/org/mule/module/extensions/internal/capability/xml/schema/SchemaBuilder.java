@@ -271,12 +271,6 @@ public class SchemaBuilder
                 }
 
                 @Override
-                public void onOperation()
-                {
-                    generateNestedProcessorElement(all, name, EMPTY, required);
-                }
-
-                @Override
                 public void onPojo()
                 {
                     registerComplexTypeChildElement(all, name, EMPTY, methodType, false);
@@ -562,11 +556,9 @@ public class SchemaBuilder
         final ExplicitGroup all = new ExplicitGroup();
         complexContentExtension.setSequence(all);
 
-        int requiredChildElements = countRequiredChildElements(parameters);
-
         for (final Parameter parameter : parameters)
         {
-            if (!CollectionUtils.isEmpty(parameter.getCapabilities(HiddenCapability.class)))
+            if (isHidden(parameter))
             {
                 continue;
             }
@@ -574,18 +566,10 @@ public class SchemaBuilder
             DataType parameterType = parameter.getType();
             DataQualifier parameterQualifier = parameterType.getQualifier();
 
-            if (requiresChildElements(parameterType))
+            if (isOperation(parameterType))
             {
-                if (requiredChildElements == 1)
-                {
-                    GroupRef groupRef = generateNestedProcessorGroup();
-                    complexContentExtension.setGroup(groupRef);
-                    complexContentExtension.setAll(null);
-                }
-                else
-                {
-                    generateNestedProcessorElement(all, parameter.getName(), EMPTY, parameter.isRequired());
-                }
+                String maxOccurs = parameterQualifier == DataQualifier.LIST ? "unbounded" : "1";
+                generateNestedProcessorElement(all, parameter.getName(), EMPTY, parameter.isRequired(), maxOccurs);
             }
             else
             {
@@ -601,7 +585,7 @@ public class SchemaBuilder
                     @Override
                     protected void defaultOperation()
                     {
-                        complexContentExtension.getAttributeOrAttributeGroup().add(createAttribute(parameter, false));
+                        complexContentExtension.getAttributeOrAttributeGroup().add(createAttribute(parameter, parameter.isRequired()));
                     }
                 });
             }
@@ -615,26 +599,12 @@ public class SchemaBuilder
         schema.getSimpleTypeOrComplexTypeOrGroup().add(complexType);
     }
 
-    private int countRequiredChildElements(List<Parameter> parameters)
+    private boolean isHidden(Parameter parameter)
     {
-        int requiredChildElements = 0;
-        for (Parameter parameter : parameters)
-        {
-            DataType type = parameter.getType();
-            if (requiresChildElements(type))
-            {
-                requiredChildElements++;
-            }
-            else if (LIST.equals(type.getQualifier()))
-            {
-                requiredChildElements++;
-            }
-        }
-
-        return requiredChildElements;
+        return !CollectionUtils.isEmpty(parameter.getCapabilities(HiddenCapability.class));
     }
 
-    private boolean requiresChildElements(DataType type)
+    private boolean isOperation(DataType type)
     {
         DataType[] genericTypes = type.getGenericTypes();
         DataQualifier qualifier = type.getQualifier();
@@ -650,11 +620,12 @@ public class SchemaBuilder
         registerExtendedType(SchemaConstants.MULE_ABSTRACT_MESSAGE_PROCESSOR_TYPE, name, operation.getParameters());
     }
 
-    private void generateNestedProcessorElement(ExplicitGroup all, String name, String description, boolean required)
+    private void generateNestedProcessorElement(ExplicitGroup all, String name, String description, boolean required, String maxOccurs)
     {
         LocalComplexType collectionComplexType = new LocalComplexType();
-        GroupRef group = generateNestedProcessorGroup();
+        GroupRef group = generateNestedProcessorGroup(required, maxOccurs);
         collectionComplexType.setGroup(group);
+        collectionComplexType.setAnnotation(createDocAnnotation(description));
 
         TopLevelElement collectionElement = new TopLevelElement();
         collectionElement.setName(NameUtils.hyphenize(name));
@@ -664,12 +635,12 @@ public class SchemaBuilder
         all.getParticle().add(objectFactory.createElement(collectionElement));
     }
 
-    private GroupRef generateNestedProcessorGroup()
+    private GroupRef generateNestedProcessorGroup(boolean required, String maxOccurs)
     {
         GroupRef group = new GroupRef();
         group.generateNestedProcessorGroup(SchemaConstants.MULE_MESSAGE_PROCESSOR_OR_OUTBOUND_ENDPOINT_TYPE);
-        group.setMinOccurs(BigInteger.ZERO);
-        group.setMaxOccurs("unbounded");
+        group.setMinOccurs(required ? BigInteger.ONE : BigInteger.ZERO);
+        group.setMaxOccurs(maxOccurs);
 
         return group;
     }

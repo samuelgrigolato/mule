@@ -7,7 +7,6 @@
 package org.mule.module.extensions.internal;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.Matchers.hasSize;
@@ -70,7 +69,6 @@ import org.mule.tck.size.SmallTest;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -113,11 +111,9 @@ public class ExtensionBuildersTestCase extends AbstractMuleTestCase
         assertThat(extension.getVersion(), equalTo(VERSION));
         assertThat(extension.getConfigurations(), hasSize(1));
 
-        Set<Date> capabilities = extension.getCapabilities(Date.class);
+        Set<Object> capabilities = extension.getCapabilities(Object.class);
         assertThat(capabilities, is(notNullValue()));
         assertThat(capabilities, hasSize(1));
-        Date capability = capabilities.iterator().next();
-        assertThat(capability, instanceOf(Date.class));
 
         verify(serviceRegistry).lookupProviders(any(Class.class), any(ClassLoader.class));
     }
