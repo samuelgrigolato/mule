@@ -36,13 +36,25 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 
 /**
- * Base test class for {@link org.mule.tck.junit4.FunctionalTestCase}s
+ * Base test class for {@link FunctionalTestCase}s
  * that make use of components generated through the extensions API.
  * <p/>
  * The value added by this class in comparison to a traditional
- * {@link org.mule.tck.junit4.FunctionalTestCase} is that before creating
- * the {@link org.mule.api.MuleContext}, it scans certain packages of the
- * classpath and discovers extensions. Once those are discovered and described,
+ * {@link FunctionalTestCase} is that before creating
+ * the {@link MuleContext}, it creates a {@link ExtensionsManager}
+ * and automatically discovers extensions by delegating on
+ * {@link ExtensionsManager#discoverExtensions(ClassLoader)}.
+ * <p/>
+ * By default, standard extension discovery will be
+ * performed by invoking {@link ExtensionsManager#discoverExtensions(ClassLoader)}.
+ * Although this behavior suits most use cases, it can be time consuming because of
+ * all the classpath scanning and the overhead of initialising extensions that
+ * are most likely not used in this tests. As the number of extensions available grows,
+ * the problem gets worst. For those cases,  you can override the {@link #getManagedDescribers()}
+ * and specify which describers are to be used to initialise the extensions manager. In that way,
+ * extensions discovery is skipped and you only initialise what you need.
+ * <p/>
+ * Once extensions are discovered and described,
  * a {@link ResourcesGenerator} is used to automatically
  * generate any backing resources needed (for example, XSD schemas, spring bundles,
  * service registration files, etc).
@@ -52,14 +64,7 @@ import org.apache.commons.io.FileUtils;
  * <p/>
  * Since this class extends {@link FunctionalTestCase}, a new {@link MuleContext}
  * is created per each test. That also means that a new {@link ExtensionsManager}
- * is created per test. By default, standard extension discovery will be
- * performed by invoking {@link ExtensionsManager#discoverExtensions(ClassLoader)}.
- * Although this behavior suits most use cases, it can be time consuming because of
- * all the classpath scanning and the time consumed by initialising extensions that
- * are most likely not used in this tests. As the number of extensions available grows,
- * the worst that overhead becomes. For that reason, you can choose to
- * implement the {@link #getManagedDescribers()} method and only provide the
- * {@link Describer}s of the extensions that you will actually use
+ * is created per test.
  *
  * @since 3.7.0
  */

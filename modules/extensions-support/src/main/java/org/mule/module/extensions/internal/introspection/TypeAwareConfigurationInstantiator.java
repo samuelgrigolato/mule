@@ -13,8 +13,8 @@ import org.mule.api.MuleRuntimeException;
 import org.mule.extensions.introspection.ConfigurationInstantiator;
 
 /**
- * Implementation of {@link ConfigurationInstantiator} which creates instantes
- * based on a given {@link Class} which is asumed to have a default and public
+ * Implementation of {@link ConfigurationInstantiator} which creates instances
+ * based on a given {@link Class} which is assumed to have a default and public
  * constructor.
  *
  * @since 3.7.0

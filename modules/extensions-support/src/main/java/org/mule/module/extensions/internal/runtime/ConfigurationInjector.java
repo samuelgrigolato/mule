@@ -71,8 +71,8 @@ final class ConfigurationInjector<C, T>
         {
             checkArgument(fields.size() == 1, String.format("Type %s has more than one field annotated with %s",
                                                             injectableType.getName(), WithConfig.class.getName()));
-            injector.delegate = new FieldInjector<>(fields.iterator().next());
 
+            injector.delegate = new FieldInjector<>(fields.iterator().next());
         }
 
         return injector;

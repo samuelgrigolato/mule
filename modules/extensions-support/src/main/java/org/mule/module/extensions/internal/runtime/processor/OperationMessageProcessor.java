@@ -20,6 +20,14 @@ import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
 
 import java.util.concurrent.Future;
 
+/**
+ * A {@link MessageProcessor} capable of executing extension operations.
+ * It obtains a configuration, evaluate all the operation parameters
+ * and executes a {@link Operation}. This message processor is capable
+ * of serving the execution of any operation in any extension.
+ *
+ * @since 3.7.0
+ */
 public final class OperationMessageProcessor implements MessageProcessor
 {
 
