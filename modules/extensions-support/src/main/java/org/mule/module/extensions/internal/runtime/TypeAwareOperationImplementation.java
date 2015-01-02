@@ -7,17 +7,26 @@
 package org.mule.module.extensions.internal.runtime;
 
 import static org.mule.module.extensions.internal.util.IntrospectionUtils.checkInstantiable;
+import static org.mule.module.extensions.internal.util.IntrospectionUtils.getImplementedTypes;
 import static org.mule.util.Preconditions.checkArgument;
+import org.mule.api.lifecycle.Disposable;
+import org.mule.api.lifecycle.Initialisable;
+import org.mule.api.lifecycle.Startable;
+import org.mule.api.lifecycle.Stoppable;
 import org.mule.extensions.introspection.OperationContext;
 import org.mule.extensions.introspection.OperationImplementation;
 import org.mule.extensions.introspection.Parameter;
 import org.mule.repackaged.internal.org.springframework.util.ReflectionUtils;
 
+import com.google.common.base.Joiner;
 import com.google.common.util.concurrent.Futures;
 
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.Future;
+
+import org.apache.commons.collections.CollectionUtils;
 
 /**
  * Implementation of {@link OperationImplementation} which relies on a
@@ -26,50 +35,70 @@ import java.util.concurrent.Future;
  *
  * @since 3.7.0
  */
-public final class TypeAwareOperationImplementation implements OperationImplementation
+public final class TypeAwareOperationImplementation<T> implements OperationImplementation
 {
 
     private static final ReturnDelegate VOID_RETURN_DELEGATE = new VoidReturnDelegate();
     private static final ReturnDelegate VALUE_RETURN_DELEGATE = new ValueReturnDelegate();
 
-    private final Class<?> actingClass;
+    private final Class<T> actingClass;
     private final Method operationMethod;
     private final ReturnDelegate returnDelegate;
+    private final ConfigurationInjector<Object, T> configurationInjector;
 
-    public TypeAwareOperationImplementation(Class<?> actingClass, Method operationMethod)
+    public TypeAwareOperationImplementation(Class<T> actingClass, Method operationMethod)
     {
-        checkInstantiable(actingClass);
+        validateActingClass(actingClass);
         checkArgument(operationMethod != null, "operation method cannot be null");
         this.actingClass = actingClass;
         this.operationMethod = operationMethod;
         returnDelegate = isVoid() ? VOID_RETURN_DELEGATE : VALUE_RETURN_DELEGATE;
+        configurationInjector = ConfigurationInjector.of(actingClass);
     }
 
     @Override
     public Future<Object> execute(OperationContext operationContext)
     {
         Map<Parameter, Object> parameters = operationContext.getParametersValues();
-        Object result = ReflectionUtils.invokeMethod(operationMethod, newOperationInstance(), parameters.values().toArray());
+        Object result = ReflectionUtils.invokeMethod(operationMethod, newOperationInstance(operationContext), parameters.values().toArray());
 
         return Futures.immediateFuture(returnDelegate.asReturnValue(result, operationContext));
     }
 
-    private Object newOperationInstance()
+    private T newOperationInstance(OperationContext context)
     {
+        T instance;
+
         try
         {
-            return actingClass.newInstance();
+            instance = actingClass.newInstance();
         }
         catch (Exception e)
         {
             throw new RuntimeException(String.format("Implementation type %s could not be instantiated", actingClass.getName()), e);
         }
+
+        configurationInjector.injectConfiguration(context.getConfigurationInstance(), instance);
+        return instance;
     }
 
     private boolean isVoid()
     {
         Class<?> returnType = operationMethod.getReturnType();
         return returnType.equals(Void.class) || returnType.equals(void.class);
+    }
+
+    private void validateActingClass(Class<T> actingClass)
+    {
+        checkInstantiable(actingClass);
+        Collection<Class<?>> lifecycleTypes = getImplementedTypes(actingClass, Initialisable.class, Startable.class, Stoppable.class, Disposable.class);
+
+        if (!CollectionUtils.isEmpty(lifecycleTypes))
+        {
+            throw new IllegalArgumentException(String.format(
+                    "Operation implementation objects cannot have lifecycle but type %s implements the following: [%s]",
+                    actingClass.getName(), Joiner.on(',').join(lifecycleTypes)));
+        }
     }
 
     private interface ReturnDelegate

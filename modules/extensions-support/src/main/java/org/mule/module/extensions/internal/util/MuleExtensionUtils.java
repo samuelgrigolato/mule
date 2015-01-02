@@ -7,8 +7,6 @@
 package org.mule.module.extensions.internal.util;
 
 import static org.mule.util.Preconditions.checkArgument;
-import org.mule.api.MuleContext;
-import org.mule.api.context.MuleContextAware;
 import org.mule.extensions.introspection.Configuration;
 import org.mule.extensions.introspection.Described;
 import org.mule.extensions.introspection.Operation;
@@ -178,17 +176,6 @@ public final class MuleExtensionUtils
         }
 
         return false;
-    }
-
-    public static void injectMuleContextIfNecessary(Collection<? extends Object> objects, MuleContext muleContext)
-    {
-        for (Object object : objects)
-        {
-            if (object instanceof MuleContextAware)
-            {
-                ((MuleContextAware) object).setMuleContext(muleContext);
-            }
-        }
     }
 
     public static <T extends Described> List<T> alphaSortDescribedList(List<T> list)

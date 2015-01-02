@@ -43,15 +43,6 @@ public class OperationParserTestCase extends ExtensionsFunctionalTestCase
         return "heisenberg-operation-config.xml";
     }
 
-    /**
-     * Temporal hack until injector in place
-     */
-    @Override
-    protected void doSetUp() throws Exception
-    {
-        HeisenbergOperations.configHolder.set(getConfig("heisenberg"));
-    }
-
     @Test
     public void operationWithReturnValueAndWithoutParameters() throws Exception
     {

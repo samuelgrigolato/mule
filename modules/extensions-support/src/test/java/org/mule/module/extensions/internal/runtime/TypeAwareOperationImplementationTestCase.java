@@ -16,6 +16,10 @@ import static org.mockito.Mockito.when;
 import static org.mule.module.extensions.HealthStatus.DEAD;
 import static org.mule.module.extensions.HeisenbergExtension.HEISENBERG;
 import org.mule.api.MuleEvent;
+import org.mule.api.MuleException;
+import org.mule.api.lifecycle.InitialisationException;
+import org.mule.api.lifecycle.Lifecycle;
+import org.mule.extensions.annotations.param.WithConfig;
 import org.mule.extensions.introspection.OperationContext;
 import org.mule.extensions.introspection.Parameter;
 import org.mule.module.extensions.HeisenbergExtension;
@@ -99,12 +103,25 @@ public class TypeAwareOperationImplementationTestCase extends AbstractMuleTestCa
         verify(muleEvent).setFlowVariable("secretPackage", "meth");
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void operationWithTwoConfigs() throws Exception
+    {
+        Method method = ClassUtils.getMethod(HeisenbergOperations.class, "hideMethInEvent", new Class<?>[] {});
+        new TypeAwareOperationImplementation(TwoConfigs.class, method);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void operationWithLifecycle() throws Exception
+    {
+        Method method = ClassUtils.getMethod(HeisenbergOperations.class, "hideMethInEvent", new Class<?>[] {});
+        new TypeAwareOperationImplementation(WithLifecycle.class, method);
+    }
+
     private void initHeisenberg()
     {
         config = new HeisenbergExtension();
         config.setMyName(HEISENBERG);
         config.setEnemies(Arrays.asList("Hank"));
-        HeisenbergOperations.configHolder.set(config);
         HeisenbergOperations.eventHolder.set(muleEvent);
     }
 
@@ -118,5 +135,44 @@ public class TypeAwareOperationImplementationTestCase extends AbstractMuleTestCa
     {
         Object value = result.get();
         assertThat(value, is(sameInstance(expected)));
+    }
+
+    public static class TwoConfigs extends HeisenbergOperations
+    {
+
+        @WithConfig
+        private HeisenbergExtension config;
+
+        public TwoConfigs()
+        {
+        }
+    }
+
+    public static class WithLifecycle extends HeisenbergOperations implements Lifecycle
+    {
+
+        @Override
+        public void dispose()
+        {
+
+        }
+
+        @Override
+        public void initialise() throws InitialisationException
+        {
+
+        }
+
+        @Override
+        public void start() throws MuleException
+        {
+
+        }
+
+        @Override
+        public void stop() throws MuleException
+        {
+
+        }
     }
 }

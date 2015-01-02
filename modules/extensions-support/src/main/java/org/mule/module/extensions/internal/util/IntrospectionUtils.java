@@ -29,6 +29,7 @@ import org.mule.util.ClassUtils;
 import org.mule.util.CollectionUtils;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
@@ -168,6 +169,25 @@ public class IntrospectionUtils
         }
 
         return map.build();
+    }
+
+    public static Set<Field> getFieldsAnnotatedWith(Class<?> clazz, Class<? extends Annotation> annotation)
+    {
+        return getAllFields(clazz, withAnnotation(annotation));
+    }
+
+    public static Set<Class<?>> getImplementedTypes(Class<?> clazz, Class<?>... types)
+    {
+        ImmutableSet.Builder<Class<?>> implemented = ImmutableSet.builder();
+        for (Class<?> type : types)
+        {
+            if (type.isAssignableFrom(clazz))
+            {
+                implemented.add(type);
+            }
+        }
+
+        return implemented.build();
     }
 
     public static Set<Method> getSetters(Class<?> clazz)

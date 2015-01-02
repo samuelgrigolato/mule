@@ -13,6 +13,7 @@ import org.mule.api.transport.PropertyScope;
 import org.mule.extensions.annotations.Operation;
 import org.mule.extensions.annotations.param.Optional;
 import org.mule.extensions.annotations.param.Payload;
+import org.mule.extensions.annotations.param.WithConfig;
 import org.mule.util.ValueHolder;
 
 import java.util.List;
@@ -25,11 +26,10 @@ public class HeisenbergOperations
     private static final String SECRET_PACKAGE = "secretPackage";
     private static final String METH = "meth";
 
-    public static ValueHolder<HeisenbergExtension> configHolder = new ValueHolder<>();
     public static ValueHolder<MuleEvent> eventHolder = new ValueHolder<>();
     public static ValueHolder<MuleMessage> messageHolder = new ValueHolder<>();
 
-    @Inject
+    @WithConfig
     private HeisenbergExtension config;
 
     @Inject
@@ -41,7 +41,6 @@ public class HeisenbergOperations
     public HeisenbergOperations()
     {
         // remove when injector is in place
-        config = configHolder.get();
         event = eventHolder.get();
         message = messageHolder.get();
     }
