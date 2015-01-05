@@ -9,46 +9,31 @@ package org.mule.extension.validation;
 
 import org.mule.api.MuleEvent;
 
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.List;
+import com.google.common.collect.ImmutableList;
 
-import org.apache.commons.collections.CollectionUtils;
+import java.io.Serializable;
+import java.util.List;
 
 public class ValidationResult implements Serializable
 {
 
-    private static final long serialVersionUID = -6736205148881613778L;
-
-    private final MuleEvent event;
+    private final MuleEvent muleEvent;
     private final List<String> messages;
 
-    public ValidationResult(MuleEvent event, List<String> messages)
+    public ValidationResult(MuleEvent muleEvent, List<String> messages)
     {
-        this.event = event;
-        if (messages != null)
-        {
-            this.messages = Collections.unmodifiableList(messages);
-        }
-        else
-        {
-            this.messages = null;
-        }
+        this.muleEvent = muleEvent;
+        this.messages = messages != null ? ImmutableList.copyOf(messages) : ImmutableList.<String>of();
     }
 
     public List<String> getMessages()
     {
-        return this.messages;
+        return messages;
     }
 
-    public MuleEvent getEvent()
+    public boolean hasErrors()
     {
-        return this.event;
-    }
-
-    public boolean hasErros()
-    {
-        return !CollectionUtils.isEmpty(this.messages);
+        return !messages.isEmpty();
     }
 
     @Override

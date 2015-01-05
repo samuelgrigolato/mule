@@ -20,9 +20,9 @@ import static org.mule.module.extensions.HeisenbergExtension.HEISENBERG;
 import static org.mule.module.extensions.HeisenbergExtension.NAMESPACE;
 import static org.mule.module.extensions.HeisenbergExtension.SCHEMA_LOCATION;
 import static org.mule.module.extensions.HeisenbergExtension.SCHEMA_VERSION;
-import org.mule.extensions.annotations.Configurable;
 import org.mule.extensions.annotations.Configurations;
 import org.mule.extensions.annotations.Operations;
+import org.mule.extensions.annotations.Parameter;
 import org.mule.extensions.annotations.capability.Xml;
 import org.mule.extensions.introspection.DataType;
 import org.mule.extensions.introspection.Describer;
@@ -303,7 +303,7 @@ public class AnnotationsBasedDescriberTestCase extends AbstractMuleTestCase
     public static class HeisenbergAlternateConfig
     {
 
-        @Configurable
+        @Parameter
         private String extendedProperty;
 
         public String getExtendedProperty()

@@ -17,7 +17,6 @@ import static org.reflections.ReflectionUtils.withParametersCount;
 import static org.reflections.ReflectionUtils.withPrefix;
 import static org.reflections.ReflectionUtils.withReturnType;
 import org.mule.api.NestedProcessor;
-import org.mule.extensions.annotations.Configurable;
 import org.mule.extensions.annotations.param.Ignore;
 import org.mule.extensions.annotations.param.Optional;
 import org.mule.extensions.introspection.DataType;
@@ -283,7 +282,7 @@ public class IntrospectionUtils
 
     public static boolean isDynamic(AccessibleObject object)
     {
-        Configurable configurable = object.getAnnotation(Configurable.class);
-        return configurable != null ? configurable.isDynamic() : true;
+        org.mule.extensions.annotations.Parameter parameter = object.getAnnotation(org.mule.extensions.annotations.Parameter.class);
+        return parameter != null ? parameter.isDynamic() : true;
     }
 }

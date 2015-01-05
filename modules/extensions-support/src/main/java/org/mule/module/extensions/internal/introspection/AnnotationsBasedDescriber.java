@@ -7,13 +7,13 @@
 package org.mule.module.extensions.internal.introspection;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
-import static org.mule.module.extensions.internal.introspection.MuleExtensionAnnotationParser.getConfigurableFields;
+import static org.mule.module.extensions.internal.introspection.MuleExtensionAnnotationParser.getParameterFields;
 import static org.mule.module.extensions.internal.introspection.MuleExtensionAnnotationParser.getDefaultValue;
 import static org.mule.module.extensions.internal.introspection.MuleExtensionAnnotationParser.getExtension;
 import static org.mule.module.extensions.internal.introspection.MuleExtensionAnnotationParser.getOperationMethods;
 import static org.mule.util.Preconditions.checkArgument;
 import org.mule.api.registry.SPIServiceRegistry;
-import org.mule.extensions.annotations.Configurable;
+import org.mule.extensions.annotations.Parameter;
 import org.mule.extensions.annotations.Configuration;
 import org.mule.extensions.annotations.Configurations;
 import org.mule.extensions.annotations.Extension;
@@ -110,9 +110,9 @@ public class AnnotationsBasedDescriber implements Describer
 
         configuration.instantiatedWith(new TypeAwareConfigurationInstantiator(extensionType));
 
-        for (Field field : getConfigurableFields(extensionType))
+        for (Field field : getParameterFields(extensionType))
         {
-            Configurable configurable = field.getAnnotation(Configurable.class);
+            Parameter Parameter = field.getAnnotation(Parameter.class);
             Optional optional = field.getAnnotation(Optional.class);
 
             ParameterConstruct parameter;
@@ -128,7 +128,7 @@ public class AnnotationsBasedDescriber implements Describer
 
             parameter.ofType(dataType);
 
-            if (!configurable.isDynamic())
+            if (!Parameter.isDynamic())
             {
                 parameter.whichIsNotDynamic();
             }

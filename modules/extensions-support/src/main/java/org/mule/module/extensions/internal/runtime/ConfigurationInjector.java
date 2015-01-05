@@ -10,7 +10,7 @@ import static org.mule.module.extensions.internal.util.IntrospectionUtils.getFie
 import static org.mule.util.Preconditions.checkArgument;
 import org.mule.api.MuleRuntimeException;
 import org.mule.config.i18n.MessageFactory;
-import org.mule.extensions.annotations.param.WithConfig;
+import org.mule.extensions.annotations.WithConfig;
 import org.mule.extensions.introspection.Configuration;
 
 import java.lang.reflect.Field;

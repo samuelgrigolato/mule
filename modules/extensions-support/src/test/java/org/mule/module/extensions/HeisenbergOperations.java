@@ -13,7 +13,7 @@ import org.mule.api.transport.PropertyScope;
 import org.mule.extensions.annotations.Operation;
 import org.mule.extensions.annotations.param.Optional;
 import org.mule.extensions.annotations.param.Payload;
-import org.mule.extensions.annotations.param.WithConfig;
+import org.mule.extensions.annotations.WithConfig;
 import org.mule.util.ValueHolder;
 
 import java.util.List;

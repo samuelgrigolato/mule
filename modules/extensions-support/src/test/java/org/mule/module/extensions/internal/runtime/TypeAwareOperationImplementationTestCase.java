@@ -19,7 +19,7 @@ import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
 import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.lifecycle.Lifecycle;
-import org.mule.extensions.annotations.param.WithConfig;
+import org.mule.extensions.annotations.WithConfig;
 import org.mule.extensions.introspection.OperationContext;
 import org.mule.extensions.introspection.Parameter;
 import org.mule.module.extensions.HeisenbergExtension;

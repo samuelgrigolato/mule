@@ -12,8 +12,8 @@ import static org.mule.module.extensions.internal.capability.xml.schema.Annotati
 import static org.mule.module.extensions.internal.capability.xml.schema.AnnotationProcessorUtils.getMethodsAnnotatedWith;
 import org.mule.api.MuleRuntimeException;
 import org.mule.config.i18n.MessageFactory;
-import org.mule.extensions.annotations.Configurable;
 import org.mule.extensions.annotations.Operation;
+import org.mule.extensions.annotations.Parameter;
 import org.mule.extensions.introspection.Extension;
 import org.mule.extensions.introspection.declaration.ConfigurationDeclaration;
 import org.mule.extensions.introspection.declaration.Declaration;
@@ -103,7 +103,7 @@ final class SchemaDocumenter
 
     private void documentConfigurationParameters(Collection<ParameterDeclaration> parameters, TypeElement element)
     {
-        final Map<String, VariableElement> fields = getFieldsAnnotatedWith(element, Configurable.class);
+        final Map<String, VariableElement> fields = getFieldsAnnotatedWith(element, Parameter.class);
         while (element != null && !Object.class.getName().equals(element.getQualifiedName().toString()))
         {
             for (ParameterDeclaration parameter : parameters)

@@ -11,9 +11,9 @@ import org.mule.api.MuleException;
 import org.mule.api.context.MuleContextAware;
 import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.lifecycle.Lifecycle;
-import org.mule.extensions.annotations.Configurable;
 import org.mule.extensions.annotations.Extension;
 import org.mule.extensions.annotations.Operations;
+import org.mule.extensions.annotations.Parameter;
 import org.mule.extensions.annotations.capability.Xml;
 import org.mule.extensions.annotations.param.Optional;
 
@@ -48,52 +48,52 @@ public class HeisenbergExtension implements Lifecycle, MuleContextAware
 
     private MuleContext muleContext;
 
-    @Configurable
+    @Parameter
     @Optional(defaultValue = HEISENBERG)
     private String myName;
 
-    @Configurable
+    @Parameter
     @Optional(defaultValue = AGE)
     private Integer age;
 
-    @Configurable
+    @Parameter
     private List<String> enemies = new LinkedList<>();
 
-    @Configurable
+    @Parameter
     private BigDecimal money;
 
-    @Configurable
+    @Parameter
     private boolean cancer;
 
-    @Configurable
+    @Parameter
     private Date dateOfBirth;
 
-    @Configurable
+    @Parameter
     private Calendar dateOfDeath;
 
-    @Configurable
+    @Parameter
     @Optional
     private Map<String, Long> recipe;
 
-    @Configurable
+    @Parameter
     @Optional
     private Set<Ricin> ricinPacks;
 
-    @Configurable
+    @Parameter
     @Optional
     private Door nextDoor;
 
     /**
      * Doors I might knock on but still haven't made up mind about
      */
-    @Configurable
+    @Parameter
     @Optional
     private Map<String, Door> candidateDoors;
 
-    @Configurable
+    @Parameter
     private HealthStatus initialHealth;
 
-    @Configurable
+    @Parameter
     private HealthStatus finalHealth;
 
     @Override

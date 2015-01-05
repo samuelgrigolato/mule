@@ -16,7 +16,6 @@ import static org.reflections.ReflectionUtils.withName;
 import static org.reflections.ReflectionUtils.withParameters;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleMessage;
-import org.mule.extensions.annotations.Configurable;
 import org.mule.extensions.annotations.Extension;
 import org.mule.extensions.annotations.param.Optional;
 import org.mule.extensions.annotations.param.Payload;
@@ -69,9 +68,9 @@ public final class MuleExtensionAnnotationParser
         return extension;
     }
 
-    static Collection<Field> getConfigurableFields(Class<?> extensionType)
+    static Collection<Field> getParameterFields(Class<?> extensionType)
     {
-        return getAllFields(extensionType, withAnnotation(Configurable.class));
+        return getAllFields(extensionType, withAnnotation(org.mule.extensions.annotations.Parameter.class));
     }
 
     static Collection<Method> getOperationMethods(Class<?> declaringClass)
