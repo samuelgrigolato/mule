@@ -96,7 +96,8 @@ public class HttpResponseBuilder extends HttpMessageBuilder implements Initialis
         }
 
         final String configuredContentType = httpResponseHeaderBuilder.getContentType();
-        final String configuredTransferEncoding = httpResponseHeaderBuilder.getTransferEncoding();
+        final String existingTransferEncoding = httpResponseHeaderBuilder.getTransferEncoding();
+        final String existingContentLength = httpResponseHeaderBuilder.getContentLength();
 
         HttpEntity httpEntity;
 
@@ -133,51 +134,39 @@ public class HttpResponseBuilder extends HttpMessageBuilder implements Initialis
             }
             else if (payload instanceof InputStream)
             {
-                if (responseStreaming == HttpStreamingType.AUTO)
+                if (responseStreaming.equals(HttpStreamingType.ALWAYS) || (responseStreaming == HttpStreamingType.AUTO && existingContentLength == null))
                 {
-                    if (configuredTransferEncoding == null)
-                    {
-                        httpResponseHeaderBuilder.addHeader(HttpHeaders.Names.TRANSFER_ENCODING, HttpHeaders.Values.CHUNKED);
-                    }
-                    httpResponseHeaderBuilder.removeHeader(HttpHeaders.Names.CONTENT_LENGTH);
+                    setupChunkedEncoding(httpResponseHeaderBuilder);
+                    httpEntity = new InputStreamHttpEntity((InputStream) payload);
                 }
-                httpEntity = new InputStreamHttpEntity((InputStream) payload);
+                else
+                {
+                    ByteArrayHttpEntity byteArrayHttpEntity = new ByteArrayHttpEntity(IOUtils.toByteArray(((InputStream) payload)));
+                    setupContentLengthEncoding(httpResponseHeaderBuilder, byteArrayHttpEntity.getContent().length);
+                    httpEntity = byteArrayHttpEntity;
+                }
             }
             else
             {
                 try
                 {
-                    httpEntity = new ByteArrayHttpEntity(event.getMessage().getPayloadAsBytes());
+                    ByteArrayHttpEntity byteArrayHttpEntity = new ByteArrayHttpEntity(event.getMessage().getPayloadAsBytes());
+                    if (responseStreaming.equals(HttpStreamingType.ALWAYS) || (responseStreaming.equals
+                            (HttpStreamingType.AUTO) && HttpHeaders.Values.CHUNKED.equals(existingTransferEncoding)))
+                    {
+                        setupChunkedEncoding(httpResponseHeaderBuilder);
+                    }
+                    else
+                    {
+                        setupContentLengthEncoding(httpResponseHeaderBuilder, byteArrayHttpEntity.getContent().length);
+                    }
+                    httpEntity = byteArrayHttpEntity;
                 }
                 catch (Exception e)
                 {
                     throw new RuntimeException(e);
                 }
             }
-        }
-
-        if (responseStreaming.equals(HttpStreamingType.ALWAYS))
-        {
-            if (httpResponseHeaderBuilder.getTransferEncoding() == null)
-            {
-                httpResponseHeaderBuilder.addHeader(HttpHeaders.Names.TRANSFER_ENCODING, HttpHeaders.Values.CHUNKED);
-            }
-            httpResponseHeaderBuilder.removeHeader(HttpHeaders.Names.CONTENT_LENGTH);
-        }
-
-        if (httpResponseHeaderBuilder.getTransferEncoding() == null && httpResponseHeaderBuilder.getContentLength() == null)
-        {
-            int calculatedContentLenght = 0;
-            if (httpEntity instanceof ByteArrayHttpEntity)
-            {
-                calculatedContentLenght = ((ByteArrayHttpEntity) httpEntity).getContent().length;
-            }
-            else if (httpEntity instanceof InputStreamHttpEntity)
-            {
-                httpEntity = new ByteArrayHttpEntity(IOUtils.toByteArray(((InputStreamHttpEntity) httpEntity).getInputStream()));
-                calculatedContentLenght = ((ByteArrayHttpEntity)httpEntity).getContent().length;
-            }
-            httpResponseHeaderBuilder.addContentLenght(String.valueOf(calculatedContentLenght));
         }
 
         Collection<String> headerNames = httpResponseHeaderBuilder.getHeaderNames();
@@ -201,6 +190,26 @@ public class HttpResponseBuilder extends HttpMessageBuilder implements Initialis
         }
         httpResponseBuilder.setEntity(httpEntity);
         return httpResponseBuilder.build();
+    }
+
+    private void setupContentLengthEncoding(HttpResponseHeaderBuilder httpResponseHeaderBuilder, int contentLength)
+    {
+        if (httpResponseHeaderBuilder.getTransferEncoding() != null)
+        {
+            logger.debug("Content-Length encoding is being used so the 'Transfer-Encoding' header has been removed");
+            httpResponseHeaderBuilder.removeHeader(HttpHeaders.Names.TRANSFER_ENCODING);
+        }
+        httpResponseHeaderBuilder.addContentLenght(String.valueOf(contentLength));
+    }
+
+    private void setupChunkedEncoding(HttpResponseHeaderBuilder httpResponseHeaderBuilder)
+    {
+        if (httpResponseHeaderBuilder.getContentLength() != null)
+        {
+            logger.debug("Chunked encoding is being used so the 'Content-Length' header has been removed");
+            httpResponseHeaderBuilder.removeHeader(HttpHeaders.Names.CONTENT_LENGTH);
+        }
+        httpResponseHeaderBuilder.addHeader(HttpHeaders.Names.TRANSFER_ENCODING, HttpHeaders.Values.CHUNKED);
     }
 
     private Integer resolveStatusCode(MuleEvent event)
