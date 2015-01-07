@@ -63,7 +63,7 @@ public class TypeAwareOperationImplementationTestCase extends AbstractMuleTestCa
     public void before()
     {
         initHeisenberg();
-        operationContext = new DefaultOperationContext(config, parameters, muleEvent);
+        operationContext = new DefaultOperationContext(config, parameters, muleEvent, null);
         when(operationContext.getParametersValues()).thenReturn(parameterValues);
     }
 
@@ -120,7 +120,7 @@ public class TypeAwareOperationImplementationTestCase extends AbstractMuleTestCa
     private void initHeisenberg()
     {
         config = new HeisenbergExtension();
-        config.setMyName(HEISENBERG);
+        config.getPersonalInfo().setMyName(HEISENBERG);
         config.setEnemies(Arrays.asList("Hank"));
         HeisenbergOperations.eventHolder.set(muleEvent);
     }

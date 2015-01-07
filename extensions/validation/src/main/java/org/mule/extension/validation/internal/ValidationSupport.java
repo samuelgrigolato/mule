@@ -11,6 +11,7 @@ import org.mule.config.i18n.MessageFactory;
 import org.mule.extension.validation.ValidationExtension;
 import org.mule.extension.validation.Validator;
 import org.mule.extension.validation.exception.ValidationException;
+import org.mule.extensions.annotations.Parameters;
 import org.mule.extensions.annotations.WithConfig;
 import org.mule.util.ClassUtils;
 
@@ -21,6 +22,7 @@ abstract class ValidationSupport
     @WithConfig
     protected ValidationExtension config;
 
+    @Parameters
     protected ValidationOptions options;
 
     protected void validateWith(Validator validator) throws Exception

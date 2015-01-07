@@ -139,6 +139,14 @@ public class OperationParserTestCase extends ExtensionsFunctionalTestCase
         assertThat(expected, is(event.getMessageAsString()));
     }
 
+    @Test
+    public void operationWithParameterGroups() throws Exception
+    {
+        MuleEvent event = runFlow("alias");
+        String expected = "Hello, my name is Walter White. I'm 53 years old";
+        assertThat(expected, is(event.getMessageAsString()));
+    }
+
     private void assertKillPayload(MuleEvent event) throws MuleException
     {
         assertThat(event.getMessageAsString(), is(String.format("%s, %s", GOODBYE_MESSAGE, VICTIM)));

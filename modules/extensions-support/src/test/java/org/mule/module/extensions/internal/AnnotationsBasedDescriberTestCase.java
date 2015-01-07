@@ -33,6 +33,7 @@ import org.mule.extensions.introspection.declaration.OperationDeclaration;
 import org.mule.extensions.introspection.declaration.ParameterDeclaration;
 import org.mule.module.extensions.Door;
 import org.mule.module.extensions.HealthStatus;
+import org.mule.module.extensions.HeisenbergAliasOperations;
 import org.mule.module.extensions.HeisenbergExtension;
 import org.mule.module.extensions.HeisenbergOperations;
 import org.mule.module.extensions.Ricin;
@@ -71,7 +72,7 @@ public class AnnotationsBasedDescriberTestCase extends AbstractMuleTestCase
     private static final String DIE = "die";
     private static final String KILL_MANY = "killMany";
     private static final String KILL_ONE = "killOne";
-
+    private static final String ALIAS = "alias";
 
     private Describer describer;
 
@@ -166,7 +167,7 @@ public class AnnotationsBasedDescriberTestCase extends AbstractMuleTestCase
 
     private void assertTestModuleOperations(Declaration declaration) throws Exception
     {
-        assertThat(declaration.getOperations(), hasSize(9));
+        assertThat(declaration.getOperations(), hasSize(10));
         assertOperation(declaration, SAY_MY_NAME_OPERATION, "");
         assertOperation(declaration, GET_ENEMY_OPERATION, "");
         assertOperation(declaration, KILL_OPERATION, "");
@@ -176,6 +177,7 @@ public class AnnotationsBasedDescriberTestCase extends AbstractMuleTestCase
         assertOperation(declaration, DIE, "");
         assertOperation(declaration, KILL_MANY, "");
         assertOperation(declaration, KILL_ONE, "");
+        assertOperation(declaration, ALIAS, "");
 
         OperationDeclaration operation = getOperation(declaration, SAY_MY_NAME_OPERATION);
         assertThat(operation, is(notNullValue()));
@@ -205,6 +207,10 @@ public class AnnotationsBasedDescriberTestCase extends AbstractMuleTestCase
         operation = getOperation(declaration, HIDE_METH_IN_MESSAGE_OPERATION);
         assertThat(operation, is(notNullValue()));
         assertThat(operation.getParameters().isEmpty(), is(true));
+
+        operation = getOperation(declaration, ALIAS);
+        assertParameter(operation.getParameters(), "myName", "", DataType.of(String.class), false, true, HEISENBERG);
+        assertParameter(operation.getParameters(), "age", "", DataType.of(Integer.class), false, true, AGE);
     }
 
     private void assertOperation(Declaration declaration,
@@ -268,7 +274,7 @@ public class AnnotationsBasedDescriberTestCase extends AbstractMuleTestCase
     @org.mule.extensions.annotations.Extension(name = EXTENSION_NAME, description = EXTENSION_DESCRIPTION, version = EXTENSION_VERSION)
     @Xml(schemaLocation = SCHEMA_LOCATION, namespace = NAMESPACE, schemaVersion = SCHEMA_VERSION)
     @Configurations(HeisenbergExtension.class)
-    @Operations({HeisenbergOperations.class})
+    @Operations({HeisenbergOperations.class, HeisenbergAliasOperations.class})
     public static class HeisenbergPointer extends HeisenbergExtension
     {
 
@@ -277,14 +283,14 @@ public class AnnotationsBasedDescriberTestCase extends AbstractMuleTestCase
     @org.mule.extensions.annotations.Extension(name = EXTENSION_NAME, description = EXTENSION_DESCRIPTION, version = EXTENSION_VERSION)
     @Xml(schemaLocation = SCHEMA_LOCATION, namespace = NAMESPACE, schemaVersion = SCHEMA_VERSION)
     @Configurations({HeisenbergExtension.class, NamedHeisenbergAlternateConfig.class})
-    @Operations({HeisenbergOperations.class})
+    @Operations({HeisenbergOperations.class, HeisenbergAliasOperations.class})
     public static class HeisengergPointerPlusExternalConfig
     {
 
     }
 
     @org.mule.extensions.annotations.Configuration(name = EXTENDED_CONFIG_NAME, description = EXTENDED_CONFIG_DESCRIPTION)
-    @Operations({HeisenbergOperations.class})
+    @Operations({HeisenbergOperations.class, HeisenbergAliasOperations.class})
     public static class NamedHeisenbergAlternateConfig extends HeisenbergAlternateConfig
     {
 

@@ -13,11 +13,15 @@ import org.mule.api.MuleMessage;
 import org.mule.api.processor.MessageProcessor;
 import org.mule.config.i18n.MessageFactory;
 import org.mule.extensions.introspection.Operation;
+import org.mule.extensions.introspection.OperationContext;
 import org.mule.module.extensions.internal.runtime.DefaultOperationContext;
 import org.mule.module.extensions.internal.runtime.resolver.ResolverSet;
 import org.mule.module.extensions.internal.runtime.resolver.ResolverSetResult;
 import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
+import org.mule.module.extensions.internal.util.GroupValueSetter;
+import org.mule.module.extensions.internal.util.ValueSetter;
 
+import java.util.List;
 import java.util.concurrent.Future;
 
 /**
@@ -34,12 +38,14 @@ public final class OperationMessageProcessor implements MessageProcessor
     private final ValueResolver<Object> configuration;
     private final Operation operation;
     private final ResolverSet resolverSet;
+    private final List<ValueSetter> instanceLevelGroupValueSetters;
 
     public OperationMessageProcessor(ValueResolver<Object> configuration, Operation operation, ResolverSet resolverSet)
     {
         this.configuration = configuration;
         this.operation = operation;
         this.resolverSet = resolverSet;
+        instanceLevelGroupValueSetters = GroupValueSetter.settersFor(operation);
     }
 
     @Override
@@ -83,9 +89,11 @@ public final class OperationMessageProcessor implements MessageProcessor
 
     private Future<Object> executeOperation(MuleEvent event, Object configInstance, ResolverSetResult parameters) throws MuleException
     {
+        OperationContext context = new DefaultOperationContext(configInstance, parameters, event, instanceLevelGroupValueSetters);
+
         try
         {
-            return operation.getImplementation().execute(new DefaultOperationContext(configInstance, parameters, event));
+            return operation.getImplementation().execute(context);
         }
         catch (Exception e)
         {

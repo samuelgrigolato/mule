@@ -89,4 +89,8 @@
         </heisenberg:kill-one>
     </flow>
 
+    <flow name="alias">
+        <heisenberg:alias config-ref="heisenberg" myName="Walter White" age="53" />
+    </flow>
+
 </mule>

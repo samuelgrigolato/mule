@@ -6,10 +6,18 @@
  */
 package org.mule.extension.validation.internal;
 
+import org.mule.extensions.annotations.Parameter;
+import org.mule.extensions.annotations.param.Optional;
+
 final class ValidationOptions
 {
 
+    @Parameter
+    @Optional
     private String exceptionClass;
+
+    @Parameter
+    @Optional
     private String message = null;
 
     public String getExceptionClass()

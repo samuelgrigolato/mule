@@ -6,17 +6,12 @@
  */
 package org.mule.module.extensions.internal.runtime.resolver;
 
-import org.mule.VoidMuleEvent;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
 import org.mule.api.lifecycle.Disposable;
 import org.mule.api.lifecycle.LifecycleUtils;
 import org.mule.api.lifecycle.Stoppable;
-import org.mule.extensions.introspection.Configuration;
-import org.mule.extensions.introspection.Parameter;
-import org.mule.module.extensions.internal.runtime.DefaultObjectBuilder;
-import org.mule.module.extensions.internal.runtime.ObjectBuilder;
-import org.mule.module.extensions.internal.util.IntrospectionUtils;
+import org.mule.module.extensions.internal.runtime.ConfigurationObjectBuilder;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -24,8 +19,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 
-import java.lang.reflect.Method;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -56,7 +49,7 @@ public class CachedConfigurationValueResolver implements ValueResolver<Object>, 
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CachedConfigurationValueResolver.class);
 
-    private final Configuration configuration;
+    private final ConfigurationObjectBuilder configurationObjectBuilder;
     private final ResolverSet resolverSet;
 
     private final LoadingCache<ResolverSetResult, Object> cache;
@@ -64,14 +57,14 @@ public class CachedConfigurationValueResolver implements ValueResolver<Object>, 
     /**
      * Creates a new instance
      *
-     * @param configuration      the introspection model of the objects this resolver produces
-     * @param resolverSet        the {@link ResolverSet} that's going to be evaluated
-     * @param expirationInterval the interval for which {@link ResolverSetResult}s are to be cached
-     * @param expirationTimeUnit the {@link TimeUnit} corresponding to {@code expirationInterval}
+     * @param configurationObjectBuilder the introspection model of the objects this resolver produces
+     * @param resolverSet                the {@link ResolverSet} that's going to be evaluated
+     * @param expirationInterval         the interval for which {@link ResolverSetResult}s are to be cached
+     * @param expirationTimeUnit         the {@link TimeUnit} corresponding to {@code expirationInterval}
      */
-    public CachedConfigurationValueResolver(Configuration configuration, ResolverSet resolverSet, long expirationInterval, TimeUnit expirationTimeUnit)
+    public CachedConfigurationValueResolver(ConfigurationObjectBuilder configurationObjectBuilder, ResolverSet resolverSet, long expirationInterval, TimeUnit expirationTimeUnit)
     {
-        this.configuration = configuration;
+        this.configurationObjectBuilder = configurationObjectBuilder;
         this.resolverSet = resolverSet;
         cache = buildCache(expirationInterval, expirationTimeUnit);
     }
@@ -86,17 +79,7 @@ public class CachedConfigurationValueResolver implements ValueResolver<Object>, 
                     @Override
                     public Object load(ResolverSetResult key) throws Exception
                     {
-                        final Class<?> prototypeClass = configuration.getInstantiator().getObjectType();
-                        final ObjectBuilder builder = new DefaultObjectBuilder(prototypeClass);
-
-                        for (Map.Entry<Parameter, Object> entry : key.asMap().entrySet())
-                        {
-                            Method setter = IntrospectionUtils.getSetter(prototypeClass, entry.getKey());
-                            builder.addPropertyValue(setter, entry.getValue());
-                        }
-
-                        //use void event because this builder has no resolvers
-                        return builder.build(VoidMuleEvent.getInstance());
+                        return configurationObjectBuilder.build(key);
                     }
                 });
     }

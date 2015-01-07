@@ -8,6 +8,7 @@ package org.mule.module.extensions.internal.introspection;
 
 import org.mule.extensions.introspection.Capable;
 import org.mule.extensions.introspection.Described;
+import org.mule.module.extensions.internal.util.CapabilityUtils;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -37,16 +38,7 @@ abstract class AbstractImmutableCapableDescribed extends AbstractImmutableDescri
     @Override
     public <T> Set<T> getCapabilities(Class<T> capabilityType)
     {
-        ImmutableSet.Builder<T> matches = ImmutableSet.builder();
-        for (Object capability : capabilities)
-        {
-            if (capabilityType.isInstance(capability))
-            {
-                matches.add((T) capability);
-            }
-        }
-
-        return matches.build();
+        return CapabilityUtils.getCapabilities(capabilities, capabilityType);
     }
 
     /**
@@ -55,6 +47,6 @@ abstract class AbstractImmutableCapableDescribed extends AbstractImmutableDescri
     @Override
     public boolean isCapableOf(Class<?> capabilityType)
     {
-        return !getCapabilities(capabilityType).isEmpty();
+        return CapabilityUtils.isCapableOf(capabilities, capabilityType);
     }
 }

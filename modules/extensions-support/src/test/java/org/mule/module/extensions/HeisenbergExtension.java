@@ -14,19 +14,18 @@ import org.mule.api.lifecycle.Lifecycle;
 import org.mule.extensions.annotations.Extension;
 import org.mule.extensions.annotations.Operations;
 import org.mule.extensions.annotations.Parameter;
+import org.mule.extensions.annotations.Parameters;
 import org.mule.extensions.annotations.capability.Xml;
 import org.mule.extensions.annotations.param.Optional;
 
 import java.math.BigDecimal;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 @Extension(name = HeisenbergExtension.EXTENSION_NAME, description = HeisenbergExtension.EXTENSION_DESCRIPTION, version = HeisenbergExtension.EXTENSION_VERSION)
-@Operations({HeisenbergOperations.class})
+@Operations({HeisenbergOperations.class, HeisenbergAliasOperations.class})
 @Xml(schemaLocation = HeisenbergExtension.SCHEMA_LOCATION, namespace = HeisenbergExtension.NAMESPACE, schemaVersion = HeisenbergExtension.SCHEMA_VERSION)
 public class HeisenbergExtension implements Lifecycle, MuleContextAware
 {
@@ -48,13 +47,8 @@ public class HeisenbergExtension implements Lifecycle, MuleContextAware
 
     private MuleContext muleContext;
 
-    @Parameter
-    @Optional(defaultValue = HEISENBERG)
-    private String myName;
-
-    @Parameter
-    @Optional(defaultValue = AGE)
-    private Integer age;
+    @Parameters
+    private ExtendedPersonalInfo personalInfo = new ExtendedPersonalInfo();
 
     @Parameter
     private List<String> enemies = new LinkedList<>();
@@ -64,12 +58,6 @@ public class HeisenbergExtension implements Lifecycle, MuleContextAware
 
     @Parameter
     private boolean cancer;
-
-    @Parameter
-    private Date dateOfBirth;
-
-    @Parameter
-    private Calendar dateOfDeath;
 
     @Parameter
     @Optional
@@ -120,16 +108,6 @@ public class HeisenbergExtension implements Lifecycle, MuleContextAware
         dispose++;
     }
 
-    public String getMyName()
-    {
-        return myName;
-    }
-
-    public void setMyName(String myName)
-    {
-        this.myName = myName;
-    }
-
     public List<String> getEnemies()
     {
         return enemies;
@@ -138,16 +116,6 @@ public class HeisenbergExtension implements Lifecycle, MuleContextAware
     public void setEnemies(List<String> enemies)
     {
         this.enemies = enemies;
-    }
-
-    public Integer getAge()
-    {
-        return age;
-    }
-
-    public void setAge(Integer age)
-    {
-        this.age = age;
     }
 
     public boolean isCancer()
@@ -168,26 +136,6 @@ public class HeisenbergExtension implements Lifecycle, MuleContextAware
     public void setMoney(BigDecimal money)
     {
         this.money = money;
-    }
-
-    public Calendar getDateOfDeath()
-    {
-        return dateOfDeath;
-    }
-
-    public void setDateOfDeath(Calendar dateOfDeath)
-    {
-        this.dateOfDeath = dateOfDeath;
-    }
-
-    public Date getDateOfBirth()
-    {
-        return dateOfBirth;
-    }
-
-    public void setDateOfBirth(Date dateOfBirth)
-    {
-        this.dateOfBirth = dateOfBirth;
     }
 
     public Map<String, Long> getRecipe()
@@ -263,6 +211,16 @@ public class HeisenbergExtension implements Lifecycle, MuleContextAware
     public HealthStatus getFinalHealth()
     {
         return finalHealth;
+    }
+
+    public ExtendedPersonalInfo getPersonalInfo()
+    {
+        return personalInfo;
+    }
+
+    public void setPersonalInfo(ExtendedPersonalInfo personalInfo)
+    {
+        this.personalInfo = personalInfo;
     }
 
     public void setFinalHealth(HealthStatus finalHealth)

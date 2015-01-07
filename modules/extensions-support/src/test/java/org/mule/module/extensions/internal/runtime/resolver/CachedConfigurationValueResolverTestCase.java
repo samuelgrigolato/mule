@@ -11,6 +11,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -18,6 +19,7 @@ import static org.mockito.Mockito.when;
 import org.mule.api.MuleEvent;
 import org.mule.extensions.introspection.Configuration;
 import org.mule.module.extensions.HeisenbergExtension;
+import org.mule.module.extensions.internal.runtime.ConfigurationObjectBuilder;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
@@ -28,7 +30,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.stubbing.Answer;
 
 @SmallTest
 @RunWith(MockitoJUnitRunner.class)
@@ -53,12 +57,25 @@ public class CachedConfigurationValueResolverTestCase extends AbstractMuleTestCa
 
     private CachedConfigurationValueResolver resolver;
 
+    private ConfigurationObjectBuilder configurationObjectBuilder;
+
     @Before
     public void before() throws Exception
     {
         when(configuration.getInstantiator().getObjectType()).thenReturn(MODULE_CLASS);
+        when(configuration.getInstantiator().newInstance()).thenAnswer(new Answer<Object>()
+        {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable
+            {
+                return MODULE_CLASS.newInstance();
+            }
+        });
+        when(configuration.getCapabilities(any(Class.class))).thenReturn(null);
+
         when(resolverSet.resolve(event)).thenReturn(resolverSetResult);
-        resolver = new CachedConfigurationValueResolver(configuration, resolverSet, EXPIRATION_INTERVAL, EXPIRATION_TIME_UNIT);
+        configurationObjectBuilder = new ConfigurationObjectBuilder(configuration, resolverSet);
+        resolver = new CachedConfigurationValueResolver(configurationObjectBuilder, resolverSet, EXPIRATION_INTERVAL, EXPIRATION_TIME_UNIT);
     }
 
     @Test
@@ -103,7 +120,8 @@ public class CachedConfigurationValueResolverTestCase extends AbstractMuleTestCa
     }
 
     @Test
-    public void timeBasedEviction() throws Exception {
+    public void timeBasedEviction() throws Exception
+    {
         HeisenbergExtension config = (HeisenbergExtension) resolver.resolve(event);
 
         Thread.sleep(EXPIRATION_INTERVAL);

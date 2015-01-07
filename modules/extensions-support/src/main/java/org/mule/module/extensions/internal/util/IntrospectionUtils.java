@@ -199,10 +199,15 @@ public class IntrospectionUtils
 
     public static Method getSetter(Class<?> declaringClass, Parameter parameter)
     {
+        return getSetter(declaringClass, parameter.getName(), parameter.getType().getRawType());
+    }
+
+    public static Method getSetter(Class<?> declaringClass, String attributeName, Class<?> attributeType)
+    {
         Set<Method> setters = getAllMethods(declaringClass, withModifier(Modifier.PUBLIC),
-                                            withName(NameUtils.getSetterName(parameter.getName())),
+                                            withName(NameUtils.getSetterName(attributeName)),
                                             withParametersCount(1),
-                                            withParameters(parameter.getType().getRawType()),
+                                            withParameters(attributeType),
                                             withReturnType(void.class));
 
         return CollectionUtils.isEmpty(setters) ? null : setters.iterator().next();

@@ -12,6 +12,7 @@ import org.mule.extensions.introspection.Parameter;
 import com.google.common.base.Objects;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -87,11 +88,18 @@ public class ResolverSetResult
     }
 
     private final Map<Parameter, Object> evaluationResult;
+    private final Map<String, Object> parameterName2Result;
     private final int hashCode;
 
     private ResolverSetResult(Map<Parameter, Object> evaluationResult, int hashCode)
     {
         this.evaluationResult = evaluationResult;
+        parameterName2Result = new HashMap<>(evaluationResult.size());
+        for (Map.Entry<Parameter, Object> entry : evaluationResult.entrySet())
+        {
+            parameterName2Result.put(entry.getKey().getName(), entry.getValue());
+        }
+
         this.hashCode = hashCode;
     }
 
@@ -106,10 +114,27 @@ public class ResolverSetResult
     {
         if (!evaluationResult.containsKey(parameter))
         {
-            throw new NoSuchElementException("This result contains no information for the parameter: " + parameter);
+            throw new NoSuchElementException("This result contains no information for the parameter: " + parameter.getName());
         }
 
         return evaluationResult.get(parameter);
+    }
+
+    /**
+     * Returns the value associated with the {@link Parameter} of the given {@code parameterName}
+     *
+     * @param parameterName the name of the {@link Parameter} which value you seek
+     * @return the value associated to that {@code parameterName}
+     * @throws NoSuchElementException if the {@code parameterName} has not been registered through the builder
+     */
+    public Object get(String parameterName)
+    {
+        if (!parameterName2Result.containsKey(parameterName))
+        {
+            throw new NoSuchElementException("This result contains no information for the parameter: " + parameterName);
+        }
+
+        return parameterName2Result.get(parameterName);
     }
 
     public Map<Parameter, Object> asMap()

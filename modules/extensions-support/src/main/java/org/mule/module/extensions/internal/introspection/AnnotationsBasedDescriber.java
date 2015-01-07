@@ -7,18 +7,20 @@
 package org.mule.module.extensions.internal.introspection;
 
 import static org.apache.commons.lang.StringUtils.EMPTY;
-import static org.mule.module.extensions.internal.introspection.MuleExtensionAnnotationParser.getParameterFields;
 import static org.mule.module.extensions.internal.introspection.MuleExtensionAnnotationParser.getDefaultValue;
 import static org.mule.module.extensions.internal.introspection.MuleExtensionAnnotationParser.getExtension;
+import static org.mule.module.extensions.internal.introspection.MuleExtensionAnnotationParser.getGroupParameterFields;
 import static org.mule.module.extensions.internal.introspection.MuleExtensionAnnotationParser.getOperationMethods;
+import static org.mule.module.extensions.internal.introspection.MuleExtensionAnnotationParser.getParameterFields;
+import static org.mule.module.extensions.internal.util.IntrospectionUtils.getSetter;
 import static org.mule.util.Preconditions.checkArgument;
 import org.mule.api.registry.SPIServiceRegistry;
-import org.mule.extensions.annotations.Parameter;
 import org.mule.extensions.annotations.Configuration;
 import org.mule.extensions.annotations.Configurations;
 import org.mule.extensions.annotations.Extension;
 import org.mule.extensions.annotations.Operation;
 import org.mule.extensions.annotations.Operations;
+import org.mule.extensions.annotations.Parameter;
 import org.mule.extensions.annotations.param.Optional;
 import org.mule.extensions.introspection.DataType;
 import org.mule.extensions.introspection.Describer;
@@ -27,14 +29,22 @@ import org.mule.extensions.introspection.declaration.Construct;
 import org.mule.extensions.introspection.declaration.DeclarationConstruct;
 import org.mule.extensions.introspection.declaration.OperationConstruct;
 import org.mule.extensions.introspection.declaration.ParameterConstruct;
+import org.mule.extensions.introspection.declaration.ParameterDeclaration;
+import org.mule.extensions.introspection.declaration.WithParameters;
 import org.mule.module.extensions.internal.capability.HiddenCapability;
+import org.mule.module.extensions.internal.capability.ImplicitArgumentCapability;
+import org.mule.module.extensions.internal.capability.ParameterGroupCapability;
 import org.mule.module.extensions.internal.runtime.TypeAwareOperationImplementation;
 import org.mule.module.extensions.internal.util.IntrospectionUtils;
 import org.mule.util.CollectionUtils;
 
+import com.google.common.collect.ImmutableSet;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -44,8 +54,9 @@ import org.apache.commons.lang.StringUtils;
  *
  * @since 3.7.0
  */
-public class AnnotationsBasedDescriber implements Describer
+public final class AnnotationsBasedDescriber implements Describer
 {
+
     private CapabilitiesResolver capabilitiesResolver = new DefaultCapabilitiesResolver(new SPIServiceRegistry());
     private final Class<?> extensionType;
 
@@ -110,29 +121,79 @@ public class AnnotationsBasedDescriber implements Describer
 
         configuration.instantiatedWith(new TypeAwareConfigurationInstantiator(extensionType));
 
+        declareConfigurationParameters(extensionType, configuration);
+    }
+
+    private void declareConfigurationParameters(Class<?> extensionType, ConfigurationConstruct configuration)
+    {
+        declareSingleParameters(extensionType, configuration.with());
+        List<ParameterGroup> groups = declareConfigurationParametersGroups(extensionType, configuration);
+        if (!CollectionUtils.isEmpty(groups))
+        {
+            configuration.withCapability(new ParameterGroupCapability(groups));
+        }
+    }
+
+    private List<ParameterGroup> declareConfigurationParametersGroups(Class<?> extensionType, ConfigurationConstruct configuration)
+    {
+        List<ParameterGroup> groups = new LinkedList<>();
+        for (Field field : getGroupParameterFields(extensionType))
+        {
+            Set<ParameterConstruct> parameters = declareSingleParameters(field.getType(), configuration.with());
+
+            if (!parameters.isEmpty())
+            {
+                ParameterGroup group = new ParameterGroup(field.getType(), getSetter(extensionType, field.getName(), field.getType()));
+                groups.add(group);
+
+                for (ParameterConstruct construct : parameters)
+                {
+                    ParameterDeclaration parameter = construct.getDeclaration();
+                    group.addParameter(construct.getDeclaration().getName(), getSetter(field.getType(), parameter.getName(), parameter.getType().getRawType()));
+                }
+
+                List<ParameterGroup> childGroups = declareConfigurationParametersGroups(field.getType(), configuration);
+                if (!CollectionUtils.isEmpty(childGroups))
+                {
+                    group.addCapability(new ParameterGroupCapability(childGroups));
+                }
+            }
+        }
+
+        return groups;
+    }
+
+    private Set<ParameterConstruct> declareSingleParameters(Class<?> extensionType, WithParameters with)
+    {
+        ImmutableSet.Builder<ParameterConstruct> parameters = ImmutableSet.builder();
+
         for (Field field : getParameterFields(extensionType))
         {
-            Parameter Parameter = field.getAnnotation(Parameter.class);
+            Parameter parameter = field.getAnnotation(Parameter.class);
             Optional optional = field.getAnnotation(Optional.class);
 
-            ParameterConstruct parameter;
+            ParameterConstruct parameterConstruct;
             DataType dataType = IntrospectionUtils.getFieldDataType(field);
             if (optional == null)
             {
-                parameter = configuration.with().requiredParameter(field.getName());
+                parameterConstruct = with.requiredParameter(field.getName());
             }
             else
             {
-                parameter = configuration.with().optionalParameter(field.getName()).defaultingTo(getDefaultValue(optional, dataType));
+                parameterConstruct = with.optionalParameter(field.getName()).defaultingTo(getDefaultValue(optional, dataType));
             }
 
-            parameter.ofType(dataType);
+            parameterConstruct.ofType(dataType);
 
-            if (!Parameter.isDynamic())
+            if (!parameter.isDynamic())
             {
-                parameter.whichIsNotDynamic();
+                parameterConstruct.whichIsNotDynamic();
             }
+
+            parameters.add(parameterConstruct);
         }
+
+        return parameters.build();
     }
 
     private void declareOperations(DeclarationConstruct declaration, Class<?> extensionType)
@@ -159,11 +220,51 @@ public class AnnotationsBasedDescriber implements Describer
             OperationConstruct operation = declaration.withOperation(resolveOperationName(method, annotation))
                     .implementedIn(new TypeAwareOperationImplementation(actingClass, method));
 
-            declareOperationParameters(method, operation);
+            declareOperationParameters(actingClass, method, operation);
         }
     }
 
-    private void declareOperationParameters(Method method, OperationConstruct operation)
+    private void declareOperationParameters(Class<?> actingClass, Method method, OperationConstruct operation)
+    {
+        declareSingleOperationParameters(method, operation);
+        List<ParameterGroup> groups = declareOperationParameterGroups(actingClass, operation);
+        if (!CollectionUtils.isEmpty(groups))
+        {
+            operation.withCapability(new ParameterGroupCapability(groups));
+        }
+    }
+
+    private List<ParameterGroup> declareOperationParameterGroups(Class<?> actingClass, OperationConstruct operation)
+    {
+        List<ParameterGroup> groups = new LinkedList<>();
+        for (Field field : getGroupParameterFields(actingClass))
+        {
+            Set<ParameterConstruct> parameters = declareSingleParameters(field.getType(), operation.with());
+
+            if (!parameters.isEmpty())
+            {
+                ParameterGroup group = new ParameterGroup(field.getType(), getSetter(actingClass, field.getName(), field.getType()));
+                groups.add(group);
+
+                for (ParameterConstruct construct : parameters)
+                {
+                    construct.withCapability(new ImplicitArgumentCapability());
+                    ParameterDeclaration parameter = construct.getDeclaration();
+                    group.addParameter(construct.getDeclaration().getName(), getSetter(field.getType(), parameter.getName(), parameter.getType().getRawType()));
+                }
+
+                List<ParameterGroup> childGroups = declareOperationParameterGroups(field.getType(), operation);
+                if (!CollectionUtils.isEmpty(childGroups))
+                {
+                    group.addCapability(new ParameterGroupCapability(childGroups));
+                }
+            }
+        }
+
+        return groups;
+    }
+
+    private void declareSingleOperationParameters(Method method, OperationConstruct operation)
     {
         List<ParameterDescriptor> descriptors = MuleExtensionAnnotationParser.parseParameter(method);
 
@@ -186,7 +287,6 @@ public class AnnotationsBasedDescriber implements Describer
     {
         return StringUtils.isBlank(operation.name()) ? method.getName() : operation.name();
     }
-
 
 
     private void describeCapabilities(DeclarationConstruct declaration, Class<?> extensionType)

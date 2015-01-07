@@ -14,7 +14,6 @@ import org.w3c.dom.Element;
 
 final class TopLevelParameterTypeBeanDefinitionParser extends BaseExtensionBeanDefinitionParser
 {
-
     private final DataType dataType;
 
     TopLevelParameterTypeBeanDefinitionParser(DataType dataType)

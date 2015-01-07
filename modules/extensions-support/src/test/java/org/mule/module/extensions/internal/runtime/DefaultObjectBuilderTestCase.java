@@ -8,12 +8,13 @@ package org.mule.module.extensions.internal.runtime;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleMessage;
-import org.mule.module.extensions.HealthStatus;
-import org.mule.module.extensions.HeisenbergExtension;
+import org.mule.module.extensions.ExtendedPersonalInfo;
+import org.mule.module.extensions.LifetimeInfo;
 import org.mule.module.extensions.internal.runtime.resolver.ValueResolver;
 import org.mule.module.extensions.internal.util.ExtensionsTestUtils;
 import org.mule.repackaged.internal.org.springframework.util.ReflectionUtils;
@@ -35,10 +36,10 @@ import org.mockito.runners.MockitoJUnitRunner;
 public class DefaultObjectBuilderTestCase extends AbstractMuleTestCase
 {
 
-    private static Class<?> PROTOTYPE_CLASS = HeisenbergExtension.class;
+    private static Class<?> PROTOTYPE_CLASS = ExtendedPersonalInfo.class;
     private static final String NAME = "heisenberg";
     private static final int AGE = 50;
-    private static HealthStatus HEALTH = HealthStatus.DEAD;
+    private static LifetimeInfo LIFETIME_INFO = new LifetimeInfo();
 
     @Mock
     private MuleEvent event;
@@ -46,10 +47,10 @@ public class DefaultObjectBuilderTestCase extends AbstractMuleTestCase
     @Mock
     private MuleContext muleContext;
 
-    private DefaultObjectBuilder builder;
+    private DefaultObjectBuilder<ExtendedPersonalInfo> builder;
     private Method nameSetter;
     private Method ageSetter;
-    private Method healthSetter;
+    private Method lifetimeInfoSetter;
     private List<ValueResolver> resolvers = new ArrayList<>();
 
     @Before
@@ -59,37 +60,37 @@ public class DefaultObjectBuilderTestCase extends AbstractMuleTestCase
 
         nameSetter = ReflectionUtils.findMethod(PROTOTYPE_CLASS, "setMyName", String.class);
         ageSetter = ReflectionUtils.findMethod(PROTOTYPE_CLASS, "setAge", Integer.class);
-        healthSetter = ReflectionUtils.findMethod(PROTOTYPE_CLASS, "setInitialHealth", HealthStatus.class);
+        lifetimeInfoSetter = ReflectionUtils.findMethod(PROTOTYPE_CLASS, "setLifetimeInfo", LifetimeInfo.class);
     }
 
     @Test
     public void build() throws Exception
     {
         populate(false);
-        HeisenbergExtension heisenberg = (HeisenbergExtension) builder.build(event);
-        verify(heisenberg);
+        ExtendedPersonalInfo personalInfo = builder.build(event);
+        verify(personalInfo);
     }
 
     @Test
     public void reusable() throws Exception
     {
         populate(false);
-        HeisenbergExtension heisenberg1 = (HeisenbergExtension) builder.build(event);
-        HeisenbergExtension heisenberg2 = (HeisenbergExtension) builder.build(event);
-        HeisenbergExtension heisenberg3 = (HeisenbergExtension) builder.build(event);
+        ExtendedPersonalInfo info1 = builder.build(event);
+        ExtendedPersonalInfo info2 = builder.build(event);
+        ExtendedPersonalInfo info3 = builder.build(event);
 
-        assertThat(heisenberg1, is(not(heisenberg2)));
-        assertThat(heisenberg1, is(not(heisenberg3)));
-        verify(heisenberg1);
-        verify(heisenberg2);
-        verify(heisenberg3);
+        assertThat(info1, is(not(info2)));
+        assertThat(info1, is(not(info3)));
+        verify(info1);
+        verify(info2);
+        verify(info3);
     }
 
-    private void verify(HeisenbergExtension heisenberg)
+    private void verify(ExtendedPersonalInfo personalInfo)
     {
-        assertThat(heisenberg.getMyName(), is(NAME));
-        assertThat(heisenberg.getAge(), is(AGE));
-        assertThat(heisenberg.getInitialHealth(), is(HEALTH));
+        assertThat(personalInfo.getMyName(), is(NAME));
+        assertThat(personalInfo.getAge(), is(AGE));
+        assertThat(personalInfo.getLifetimeInfo(), is(sameInstance(LIFETIME_INFO)));
     }
 
     @Test
@@ -169,7 +170,7 @@ public class DefaultObjectBuilderTestCase extends AbstractMuleTestCase
     {
         builder.addPropertyResolver(nameSetter, getResolver(NAME, dynamic));
         builder.addPropertyResolver(ageSetter, getResolver(AGE, dynamic));
-        builder.addPropertyResolver(healthSetter, getResolver(HEALTH, dynamic));
+        builder.addPropertyResolver(lifetimeInfoSetter, getResolver(LIFETIME_INFO, dynamic));
     }
 
     private ValueResolver getResolver(Object value, boolean dynamic) throws Exception

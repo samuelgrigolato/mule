@@ -209,8 +209,8 @@ public class ConfigParserTestCase extends ExtensionsFunctionalTestCase
 
     private void assertSimpleProperties(HeisenbergExtension heisenberg)
     {
-        assertEquals(HeisenbergExtension.HEISENBERG, heisenberg.getMyName());
-        assertEquals(Integer.valueOf(HeisenbergExtension.AGE), heisenberg.getAge());
+        assertEquals(HeisenbergExtension.HEISENBERG, heisenberg.getPersonalInfo().getMyName());
+        assertEquals(Integer.valueOf(HeisenbergExtension.AGE), heisenberg.getPersonalInfo().getAge());
 
         List<String> enemies = heisenberg.getEnemies();
         assertThat(enemies, notNullValue());
@@ -223,11 +223,11 @@ public class ConfigParserTestCase extends ExtensionsFunctionalTestCase
         assertThat(heisenberg.getFinalHealth(), is(FINAL_HEALTH));
 
         Calendar dayOfBirth = Calendar.getInstance();
-        dayOfBirth.setTime(heisenberg.getDateOfBirth());
+        dayOfBirth.setTime(heisenberg.getPersonalInfo().getLifetimeInfo().getDateOfBirth());
 
         //only compare year to avoid timezone related flakyness
         assertEquals(getDateOfBirth().get(Calendar.YEAR), dayOfBirth.get(Calendar.YEAR));
-        assertEquals(getDateOfDeath().get(Calendar.YEAR), heisenberg.getDateOfDeath().get(Calendar.YEAR));
+        assertEquals(getDateOfDeath().get(Calendar.YEAR), heisenberg.getPersonalInfo().getLifetimeInfo().getDateOfDeath().get(Calendar.YEAR));
 
         assertEquals(new BigDecimal(MONEY), heisenberg.getMoney());
     }

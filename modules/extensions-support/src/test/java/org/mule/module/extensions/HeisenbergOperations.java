@@ -11,9 +11,9 @@ import org.mule.api.MuleMessage;
 import org.mule.api.NestedProcessor;
 import org.mule.api.transport.PropertyScope;
 import org.mule.extensions.annotations.Operation;
+import org.mule.extensions.annotations.WithConfig;
 import org.mule.extensions.annotations.param.Optional;
 import org.mule.extensions.annotations.param.Payload;
-import org.mule.extensions.annotations.WithConfig;
 import org.mule.util.ValueHolder;
 
 import java.util.List;
@@ -48,7 +48,7 @@ public class HeisenbergOperations
     @Operation
     public String sayMyName()
     {
-        return config.getMyName();
+        return config.getPersonalInfo().getMyName();
     }
 
     @Operation

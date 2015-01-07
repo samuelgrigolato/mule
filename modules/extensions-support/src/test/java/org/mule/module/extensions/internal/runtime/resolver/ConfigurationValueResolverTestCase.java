@@ -10,6 +10,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -74,6 +75,7 @@ public class ConfigurationValueResolverTestCase extends AbstractMuleTestCase
                 return MODULE_CLASS.newInstance();
             }
         });
+        when(configuration.getCapabilities(any(Class.class))).thenReturn(null);
 
         Map<Parameter, ValueResolver> parameters = new HashMap<>();
         parameters.put(getParameter("myName", String.class), new StaticValueResolver(MY_NAME));

@@ -6,9 +6,12 @@
  */
 package org.mule.module.extensions.internal.runtime;
 
+import static org.mule.config.i18n.MessageFactory.createStaticMessage;
 import static org.mule.module.extensions.internal.util.IntrospectionUtils.checkInstantiable;
 import static org.mule.module.extensions.internal.util.IntrospectionUtils.getImplementedTypes;
 import static org.mule.util.Preconditions.checkArgument;
+import org.mule.api.MuleException;
+import org.mule.api.MuleRuntimeException;
 import org.mule.api.lifecycle.Disposable;
 import org.mule.api.lifecycle.Initialisable;
 import org.mule.api.lifecycle.Startable;
@@ -16,13 +19,18 @@ import org.mule.api.lifecycle.Stoppable;
 import org.mule.extensions.introspection.OperationContext;
 import org.mule.extensions.introspection.OperationImplementation;
 import org.mule.extensions.introspection.Parameter;
+import org.mule.module.extensions.internal.capability.ImplicitArgumentCapability;
+import org.mule.module.extensions.internal.runtime.resolver.ResolverSetResult;
+import org.mule.module.extensions.internal.util.ValueSetter;
 import org.mule.repackaged.internal.org.springframework.util.ReflectionUtils;
 
 import com.google.common.base.Joiner;
 import com.google.common.util.concurrent.Futures;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
@@ -57,15 +65,28 @@ public final class TypeAwareOperationImplementation<T> implements OperationImple
     }
 
     @Override
-    public Future<Object> execute(OperationContext operationContext)
+    public Future<Object> execute(OperationContext operationContext) throws Exception
     {
-        Map<Parameter, Object> parameters = operationContext.getParametersValues();
-        Object result = ReflectionUtils.invokeMethod(operationMethod, newOperationInstance(operationContext), parameters.values().toArray());
-
+        Object result = ReflectionUtils.invokeMethod(operationMethod, newOperationInstance(operationContext), getParameterValues(operationContext));
         return Futures.immediateFuture(returnDelegate.asReturnValue(result, operationContext));
     }
 
-    private T newOperationInstance(OperationContext context)
+    private Object[] getParameterValues(OperationContext operationContext)
+    {
+        Map<Parameter, Object> parameters = operationContext.getParametersValues();
+        List<Object> values = new ArrayList<>(parameters.size());
+        for (Map.Entry<Parameter, Object> parameter : parameters.entrySet())
+        {
+            if (!parameter.getKey().isCapableOf(ImplicitArgumentCapability.class))
+            {
+                values.add(parameter.getValue());
+            }
+        }
+
+        return values.toArray();
+    }
+
+    private T newOperationInstance(OperationContext context) throws MuleException
     {
         T instance;
 
@@ -75,17 +96,32 @@ public final class TypeAwareOperationImplementation<T> implements OperationImple
         }
         catch (Exception e)
         {
-            throw new RuntimeException(String.format("Implementation type %s could not be instantiated", actingClass.getName()), e);
+            throw new MuleRuntimeException(createStaticMessage(String.format("Implementation type %s could not be instantiated", actingClass.getName())), e);
         }
 
         configurationInjector.injectConfiguration(context.getConfigurationInstance(), instance);
+        setInstanceLevelParameterGroups(instance, context);
+
         return instance;
+    }
+
+    private void setInstanceLevelParameterGroups(Object instance, OperationContext context) throws MuleException
+    {
+        List<ValueSetter> groupSetters = ((DefaultOperationContext) context).getInstanceLevelGroupValueSetters();
+        if (!CollectionUtils.isEmpty(groupSetters))
+        {
+            ResolverSetResult resolverSetResult = ((DefaultOperationContext) context).getParameters();
+            for (ValueSetter setter : groupSetters)
+            {
+                setter.set(instance, resolverSetResult);
+            }
+        }
     }
 
     private boolean isVoid()
     {
         Class<?> returnType = operationMethod.getReturnType();
-        return returnType.equals(Void.class) || returnType.equals(void.class);
+        return returnType.equals(void.class) || returnType.equals(Void.class);
     }
 
     private void validateActingClass(Class<T> actingClass)
