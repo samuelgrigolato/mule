@@ -43,8 +43,8 @@ public final class CommonValidations extends ValidationSupport
      * @param value the boolean to test
      * @throws Exception if the value is not {@code true}
      */
-    @Operation
-    public void validateTrue(final boolean value) throws Exception
+    @Operation(name = "true")
+    public void isTrue(final boolean value) throws Exception
     {
         validateWith(new Validator()
         {
@@ -68,8 +68,8 @@ public final class CommonValidations extends ValidationSupport
      * @param value the boolean to test
      * @throws Exception if the value is not {@code true}
      */
-    @Operation
-    public void validateFalse(final boolean value) throws Exception
+    @Operation(name = "false")
+    public void isFalse(final boolean value) throws Exception
     {
         validateWith(new Validator()
         {
@@ -182,8 +182,8 @@ public final class CommonValidations extends ValidationSupport
      *
      * @param options the number options
      */
-    @Operation
-    public void validateDouble(NumberValidationOptions options) throws Exception
+    @Operation(name = "double")
+    public void isDouble(NumberValidationOptions options) throws Exception
     {
         validateWith(new NumberValidator(options)
         {
@@ -237,8 +237,8 @@ public final class CommonValidations extends ValidationSupport
      *
      * @param options the number options
      */
-    @Operation
-    public void validateFloat(NumberValidationOptions options) throws Exception
+    @Operation(name = "float")
+    public void isFloat(NumberValidationOptions options) throws Exception
     {
         validateWith(new NumberValidator(options)
         {
@@ -267,8 +267,8 @@ public final class CommonValidations extends ValidationSupport
      *
      * @param options the number options
      */
-    @Operation
-    public void validateInteger(NumberValidationOptions options) throws Exception
+    @Operation(name = "integer")
+    public void isInteger(NumberValidationOptions options) throws Exception
     {
         validateWith(new NumberValidator(options)
         {
@@ -413,8 +413,8 @@ public final class CommonValidations extends ValidationSupport
      *
      * @param options the number options
      */
-    @Operation
-    public void validateLong(NumberValidationOptions options) throws Exception
+    @Operation(name = "long")
+    public void isLong(NumberValidationOptions options) throws Exception
     {
         validateWith(new NumberValidator(options)
         {
@@ -543,8 +543,8 @@ public final class CommonValidations extends ValidationSupport
      *
      * @param value the value to test
      */
-    @Operation
-    public void validateNull(final Object value) throws Exception
+    @Operation(name = "null")
+    public void isNull(final Object value) throws Exception
     {
         validateWith(new Validator()
         {
@@ -567,8 +567,8 @@ public final class CommonValidations extends ValidationSupport
      *
      * @param options the number options
      */
-    @Operation
-    public void validateShort(NumberValidationOptions options) throws Exception
+    @Operation(name = "short")
+    public void isShort(NumberValidationOptions options) throws Exception
     {
         validateWith(new NumberValidator(options)
         {
