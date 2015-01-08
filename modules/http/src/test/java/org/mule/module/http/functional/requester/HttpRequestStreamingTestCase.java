@@ -7,6 +7,7 @@
 package org.mule.module.http.functional.requester;
 
 
+import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
@@ -168,13 +169,13 @@ public class HttpRequestStreamingTestCase extends AbstractHttpRequestTestCase
     @Override
     protected void handleRequest(Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException
     {
-        transferEncodingHeader = baseRequest.getHeader("Transfer-Encoding");
-        contentLengthHeader = baseRequest.getHeader("Content-Length");
+        transferEncodingHeader = baseRequest.getHeader(TRANSFER_ENCODING);
+        contentLengthHeader = baseRequest.getHeader(CONTENT_LENGTH);
 
         IOUtils.toString(request.getInputStream());
 
         response.setContentType("text/html");
-        response.setStatus(HttpServletResponse.SC_OK);
+        response.setStatus(SC_OK);
         response.getWriter().print(DEFAULT_RESPONSE);
     }
 }

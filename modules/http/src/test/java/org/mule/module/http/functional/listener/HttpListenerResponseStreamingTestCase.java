@@ -10,7 +10,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
-import org.mule.module.http.api.HttpHeaders;
+import static org.mule.module.http.api.HttpHeaders.Names.CONTENT_LENGTH;
+import static org.mule.module.http.api.HttpHeaders.Names.TRANSFER_ENCODING;
+import static org.mule.module.http.api.HttpHeaders.Values.CHUNKED;
 import org.mule.tck.junit4.FunctionalTestCase;
 import org.mule.tck.junit4.rule.DynamicPort;
 import org.mule.util.IOUtils;
@@ -111,6 +113,13 @@ public class HttpListenerResponseStreamingTestCase extends FunctionalTestCase
         testResponseIsChunkedEncoding(url);
     }
 
+    @Test
+    public void inputStreamWithTransferEncodingAndContentLength() throws Exception
+    {
+        final String url = getUrl("inputStreamWithTransferEncodingAndContentLength");
+        testResponseIsContentLengthEncoding(url);
+    }
+
     // NEVER - String
 
     @Test
@@ -207,8 +216,8 @@ public class HttpListenerResponseStreamingTestCase extends FunctionalTestCase
     {
         final Response response = Request.Get(url).connectTimeout(1000).socketTimeout(1000).execute();
         final HttpResponse httpResponse = response.returnResponse();
-        final Header transferEncodingHeader = httpResponse.getFirstHeader(HttpHeaders.Names.TRANSFER_ENCODING);
-        final Header contentLengthHeader = httpResponse.getFirstHeader(HttpHeaders.Names.CONTENT_LENGTH);
+        final Header transferEncodingHeader = httpResponse.getFirstHeader(TRANSFER_ENCODING);
+        final Header contentLengthHeader = httpResponse.getFirstHeader(CONTENT_LENGTH);
         assertThat(contentLengthHeader, notNullValue());
         assertThat(transferEncodingHeader, nullValue());
         assertThat(IOUtils.toString(httpResponse.getEntity().getContent()), is(TEST_BODY));
@@ -223,11 +232,11 @@ public class HttpListenerResponseStreamingTestCase extends FunctionalTestCase
     {
         final Response response = Request.Post(url).connectTimeout(1000).socketTimeout(1000).bodyByteArray(TEST_BODY.getBytes()).execute();
         final HttpResponse httpResponse = response.returnResponse();
-        final Header transferEncodingHeader = httpResponse.getFirstHeader(HttpHeaders.Names.TRANSFER_ENCODING);
-        final Header contentLengthHeader = httpResponse.getFirstHeader(HttpHeaders.Names.CONTENT_LENGTH);
+        final Header transferEncodingHeader = httpResponse.getFirstHeader(TRANSFER_ENCODING);
+        final Header contentLengthHeader = httpResponse.getFirstHeader(CONTENT_LENGTH);
         assertThat(contentLengthHeader, nullValue());
         assertThat(transferEncodingHeader, notNullValue());
-        assertThat(transferEncodingHeader.getValue(), is(HttpHeaders.Values.CHUNKED));
+        assertThat(transferEncodingHeader.getValue(), is(CHUNKED));
         assertThat(IOUtils.toString(httpResponse.getEntity().getContent()), is(TEST_BODY));
     }
 

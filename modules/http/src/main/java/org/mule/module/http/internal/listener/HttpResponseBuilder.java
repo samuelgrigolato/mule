@@ -6,6 +6,11 @@
  */
 package org.mule.module.http.internal.listener;
 
+import static org.mule.module.http.api.HttpHeaders.Names.CONTENT_LENGTH;
+import static org.mule.module.http.api.HttpHeaders.Names.TRANSFER_ENCODING;
+import static org.mule.module.http.api.HttpHeaders.Values.CHUNKED;
+import static org.mule.module.http.api.requester.HttpStreamingType.ALWAYS;
+import static org.mule.module.http.api.requester.HttpStreamingType.AUTO;
 import org.mule.api.MessagingException;
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
@@ -51,7 +56,7 @@ public class HttpResponseBuilder extends HttpMessageBuilder implements Initialis
     private String statusCode;
     private String reasonPhrase;
     private boolean disablePropertiesAsHeaders = false;
-    private HttpStreamingType responseStreaming = HttpStreamingType.AUTO;
+    private HttpStreamingType responseStreaming = AUTO;
     private boolean multipartEntityWithNoMultipartContentyTypeWarned;
     private boolean mapPayloadButNoUrlEncodedContentyTypeWarned;
     private AttributeEvaluator statusCodeEvaluator;
@@ -135,7 +140,7 @@ public class HttpResponseBuilder extends HttpMessageBuilder implements Initialis
             }
             else if (payload instanceof InputStream)
             {
-                if (responseStreaming.equals(HttpStreamingType.ALWAYS) || (responseStreaming == HttpStreamingType.AUTO && existingContentLength == null))
+                if (responseStreaming == ALWAYS || (responseStreaming == AUTO && existingContentLength == null))
                 {
                     setupChunkedEncoding(httpResponseHeaderBuilder);
                     httpEntity = new InputStreamHttpEntity((InputStream) payload);
@@ -152,8 +157,7 @@ public class HttpResponseBuilder extends HttpMessageBuilder implements Initialis
                 try
                 {
                     ByteArrayHttpEntity byteArrayHttpEntity = new ByteArrayHttpEntity(event.getMessage().getPayloadAsBytes());
-                    if (responseStreaming.equals(HttpStreamingType.ALWAYS) || (responseStreaming.equals
-                            (HttpStreamingType.AUTO) && HttpHeaders.Values.CHUNKED.equals(existingTransferEncoding)))
+                    if (responseStreaming == ALWAYS || (responseStreaming == AUTO && existingTransferEncoding == CHUNKED))
                     {
                         setupChunkedEncoding(httpResponseHeaderBuilder);
                     }
@@ -198,7 +202,7 @@ public class HttpResponseBuilder extends HttpMessageBuilder implements Initialis
         if (httpResponseHeaderBuilder.getTransferEncoding() != null)
         {
             logger.debug("Content-Length encoding is being used so the 'Transfer-Encoding' header has been removed");
-            httpResponseHeaderBuilder.removeHeader(HttpHeaders.Names.TRANSFER_ENCODING);
+            httpResponseHeaderBuilder.removeHeader(TRANSFER_ENCODING);
         }
         httpResponseHeaderBuilder.addContentLenght(String.valueOf(contentLength));
     }
@@ -208,9 +212,9 @@ public class HttpResponseBuilder extends HttpMessageBuilder implements Initialis
         if (httpResponseHeaderBuilder.getContentLength() != null)
         {
             logger.debug("Chunked encoding is being used so the 'Content-Length' header has been removed");
-            httpResponseHeaderBuilder.removeHeader(HttpHeaders.Names.CONTENT_LENGTH);
+            httpResponseHeaderBuilder.removeHeader(CONTENT_LENGTH);
         }
-        httpResponseHeaderBuilder.addHeader(HttpHeaders.Names.TRANSFER_ENCODING, HttpHeaders.Values.CHUNKED);
+        httpResponseHeaderBuilder.addHeader(TRANSFER_ENCODING, CHUNKED);
     }
 
     private Integer resolveStatusCode(MuleEvent event)

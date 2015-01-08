@@ -88,6 +88,16 @@
         <set-property propertyName="Transfer-Encoding" value="chunked"/>
     </flow>
 
+    <flow name="inputStreamWithTransferEncodingAndContentLengthFlow">
+        <http:listener config-ref="listenerConfig" path="/inputStreamWithTransferEncodingAndContentLength">
+            <http:response-builder>
+                <http:header headerName="Transfer-Encoding" value="chunked"/>
+                <http:header headerName="Content-Length" value="#[stringPayload.length()]"/>
+            </http:response-builder>
+        </http:listener>
+        <set-payload value="#[inputStreamPayload]"/>
+    </flow>
+
     <flow name="neverStringFlow">
         <http:listener config-ref="listenerConfig" path="/neverString" responseStreamingMode="NEVER"/>
         <set-payload value="#[stringPayload]"/>
