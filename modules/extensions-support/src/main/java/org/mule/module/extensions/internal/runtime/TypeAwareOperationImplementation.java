@@ -107,7 +107,7 @@ public final class TypeAwareOperationImplementation<T> implements OperationImple
 
     private void setInstanceLevelParameterGroups(Object instance, OperationContext context) throws MuleException
     {
-        List<ValueSetter> groupSetters = ((DefaultOperationContext) context).getInstanceLevelGroupValueSetters();
+        List<ValueSetter> groupSetters = ((DefaultOperationContext) context).getGroupValueSetters();
         if (!CollectionUtils.isEmpty(groupSetters))
         {
             ResolverSetResult resolverSetResult = ((DefaultOperationContext) context).getParameters();

@@ -36,7 +36,7 @@ import java.util.Map;
  *
  * @since 3.7.0
  */
-public class GroupValueSetter implements ValueSetter
+public final class GroupValueSetter implements ValueSetter
 {
 
     public static List<ValueSetter> settersFor(Capable capable)

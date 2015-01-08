@@ -21,7 +21,7 @@ import java.lang.reflect.Method;
  *
  * @since 3.7.0
  */
-public class SingleValueSetter implements ValueSetter
+public final class SingleValueSetter implements ValueSetter
 {
 
     /**

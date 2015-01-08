@@ -99,8 +99,7 @@ public class ParameterGroup implements Capable
         return ImmutableMap.copyOf(parameters);
     }
 
-
-    protected void addCapability(Object capability)
+    public void addCapability(Object capability)
     {
         checkArgument(capability != null, "cannot add a null capability");
         capabilities.add(capability);

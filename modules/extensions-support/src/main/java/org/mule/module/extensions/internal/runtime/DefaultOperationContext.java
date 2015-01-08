@@ -15,20 +15,42 @@ import org.mule.module.extensions.internal.util.ValueSetter;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Default implementation of {@link OperationContext} which
+ * adds additional information which is relevant to this implementation
+ * of the extensions-api, even though it's not part of the API itself
+ *
+ * @since 3.7.0
+ */
 public final class DefaultOperationContext implements OperationContext
 {
 
+    /**
+     * The configuration instance for this execution
+     */
     private final Object configurationInstance;
-    private final ResolverSetResult parameters;
-    private final MuleEvent event;
-    private final List<ValueSetter> instanceLevelGroupValueSetters;
 
-    public DefaultOperationContext(Object configurationInstance, ResolverSetResult parameters, MuleEvent event, List<ValueSetter> instanceLevelGroupValueSetters)
+    /**
+     * the values for each parameter
+     */
+    private final ResolverSetResult parameters;
+
+    /**
+     * The current {@link MuleEvent}
+     */
+    private final MuleEvent event;
+
+    /**
+     *  A list of {@link ValueSetter} to resolve parameter groups
+     */
+    private final List<ValueSetter> groupValueSetters;
+
+    public DefaultOperationContext(Object configurationInstance, ResolverSetResult parameters, MuleEvent event, List<ValueSetter> groupValueSetters)
     {
         this.configurationInstance = configurationInstance;
         this.parameters = parameters;
         this.event = event;
-        this.instanceLevelGroupValueSetters = instanceLevelGroupValueSetters;
+        this.groupValueSetters = groupValueSetters;
     }
 
     @Override
@@ -53,8 +75,8 @@ public final class DefaultOperationContext implements OperationContext
         return event;
     }
 
-    List<ValueSetter> getInstanceLevelGroupValueSetters()
+    List<ValueSetter> getGroupValueSetters()
     {
-        return instanceLevelGroupValueSetters;
+        return groupValueSetters;
     }
 }
