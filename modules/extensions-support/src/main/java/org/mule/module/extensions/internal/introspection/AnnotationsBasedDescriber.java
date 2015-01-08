@@ -18,7 +18,6 @@ import org.mule.api.registry.SPIServiceRegistry;
 import org.mule.extensions.annotations.Configuration;
 import org.mule.extensions.annotations.Configurations;
 import org.mule.extensions.annotations.Extension;
-import org.mule.extensions.annotations.Operation;
 import org.mule.extensions.annotations.Operations;
 import org.mule.extensions.annotations.Parameter;
 import org.mule.extensions.annotations.param.Optional;
@@ -45,8 +44,6 @@ import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-
-import org.apache.commons.lang.StringUtils;
 
 /**
  * Implementation of {@link Describer} which generates a {@link Construct} by
@@ -216,8 +213,7 @@ public final class AnnotationsBasedDescriber implements Describer
     {
         for (Method method : getOperationMethods(actingClass))
         {
-            Operation annotation = method.getAnnotation(Operation.class);
-            OperationConstruct operation = declaration.withOperation(resolveOperationName(method, annotation))
+            OperationConstruct operation = declaration.withOperation(method.getName())
                     .implementedIn(new TypeAwareOperationImplementation(actingClass, method));
 
             declareOperationParameters(actingClass, method, operation);
@@ -282,12 +278,6 @@ public final class AnnotationsBasedDescriber implements Describer
             }
         }
     }
-
-    private String resolveOperationName(Method method, Operation operation)
-    {
-        return StringUtils.isBlank(operation.name()) ? method.getName() : operation.name();
-    }
-
 
     private void describeCapabilities(DeclarationConstruct declaration, Class<?> extensionType)
     {
