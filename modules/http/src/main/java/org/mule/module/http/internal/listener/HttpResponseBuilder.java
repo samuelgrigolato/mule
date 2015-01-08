@@ -118,6 +118,7 @@ public class HttpResponseBuilder extends HttpMessageBuilder implements Initialis
             final Object payload = event.getMessage().getPayload();
             if (payload == NullPayload.getInstance())
             {
+                setupContentLengthEncoding(httpResponseHeaderBuilder, 0);
                 httpEntity = new EmptyHttpEntity();
             }
             else if (payload instanceof Map)
